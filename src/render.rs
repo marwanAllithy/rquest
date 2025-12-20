@@ -1,0 +1,131 @@
+use ratatui::{
+    buffer::Buffer,
+    layout::{
+        Constraint::{Length, Min, Percentage},
+        Layout, Rect,
+    },
+    style::{palette::tailwind, Color, Stylize},
+    text::Line,
+    widgets::{Block, BorderType, Padding, Paragraph, Tabs, Widget},
+};
+use strum::IntoEnumIterator;
+
+use crate::{app::App, areas::SelectedArea, tabs::SelectedTab};
+
+impl Widget for &App {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        //
+        // Main app laytouts
+        let [sidebar_area, view_area] = Layout::horizontal([Percentage(15), Percentage(85)])
+            .margin(1)
+            .areas(area);
+
+        // view_area
+        let vertical = Layout::vertical([Length(1), Min(0), Length(1)]);
+        let [header_area, inner_area, footer_area] = vertical.areas(view_area);
+
+        // top bar
+        let horizontal = Layout::horizontal([Min(0), Length(20)]);
+        let [tabs_area, title_area] = horizontal.areas(header_area);
+
+        // inner_area
+        let [url_area, selected_tab_area] = Layout::vertical([Length(3), Min(0)]).areas(inner_area);
+
+        self.render_url(url_area, buf);
+        render_sidebar(sidebar_area, buf);
+        render_title(title_area, buf);
+        self.render_tabs(tabs_area, buf);
+
+        // TODO: impliment the rendering of the selected in a way that works with the others
+        self.render_selected_tab(selected_tab_area, buf);
+        render_footer(footer_area, buf);
+    }
+}
+
+impl App {
+    pub fn render_tabs(&self, area: Rect, buf: &mut Buffer) {
+        let titles = SelectedTab::iter().map(SelectedTab::title);
+        let highlight_style = (Color::default(), self.selected_tab.palette().c500);
+        let selected_tab_index = self.selected_tab as usize;
+        Tabs::new(titles)
+            .highlight_style(highlight_style)
+            .select(selected_tab_index)
+            .padding("", "")
+            .divider(" ")
+            .render(area, buf);
+    }
+
+    pub fn render_selected_tab(&self, area: Rect, buf: &mut Buffer) {
+        match self.selected_tab {
+            SelectedTab::Params => {
+                self.selected_tab
+                    .render_params(self.selected_area, self.params.clone(), area, buf)
+            }
+            SelectedTab::Auth => {
+                self.selected_tab
+                    .render_auth(self.selected_area, &self.auth, area, buf)
+            }
+            SelectedTab::Headers => {
+                self.selected_tab
+                    .render_headers(self.selected_area, &self.headers, area, buf)
+            }
+            SelectedTab::Body => {
+                self.selected_tab
+                    .render_body(self.selected_area, &self.body, area, buf)
+            }
+            SelectedTab::Result => {
+                self.selected_tab
+                    .render_result(self.selected_area, &self.result, area, buf)
+            }
+        }
+    }
+
+    pub fn render_url(&self, area: Rect, buf: &mut Buffer) {
+        let highlight_color = if SelectedArea::Url == self.selected_area {
+            tailwind::GREEN.c200
+        } else {
+            tailwind::GREEN.c700
+        };
+
+        Paragraph::new(self.url_value.clone().as_str())
+            .block(
+                Block::bordered()
+                    .title(" URL ")
+                    .fg(highlight_color)
+                    .border_type(BorderType::Rounded),
+            )
+            .render(area, buf);
+    }
+}
+fn render_sidebar(area: Rect, buf: &mut Buffer) {
+    Paragraph::new("this will be the sidebar")
+        .block(
+            Block::bordered()
+                .fg(Color::Green)
+                .padding(Padding::uniform(1))
+                .border_type(BorderType::Rounded),
+        )
+        .render(area, buf);
+}
+
+fn render_title(area: Rect, buf: &mut Buffer) {
+    "Rquest".bold().render(area, buf);
+}
+
+fn render_footer(area: Rect, buf: &mut Buffer) {
+    Line::raw("◄ ► to change tab | Press q to quit")
+        .centered()
+        .render(area, buf);
+}
+
+//impl Widget for SelectedTab {
+//    fn render(self, area: Rect, buf: &mut Buffer) {
+//        match self {
+//            Self::Params => self.render_params(area, buf),
+//            Self::Auth => self.render_auth(area, buf),
+//            Self::Headers => self.render_headers(area, buf),
+//            Self::Body => self.render_body(area, buf),
+//            Self::Result => self.render_result(area, buf),
+//        }
+//    }
+//}
