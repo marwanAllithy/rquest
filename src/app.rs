@@ -17,6 +17,7 @@ pub struct App {
     pub url_value: String,
     pub moving: bool,
     pub history: Option<ListState>,
+    pub param_popup: bool,
     pub params: ParamsList,
     pub headers: Option<ListState>,
     pub body: Option<ListState>,
@@ -50,6 +51,11 @@ impl App {
                     KeyCode::Char('l') | KeyCode::Right => self.next_tab(),
                     KeyCode::Char('h') | KeyCode::Left => self.previous_tab(),
                     KeyCode::Char('q') | KeyCode::Esc => self.quit(),
+                    _ => {}
+                },
+                SelectedArea::Params => match key.code {
+                    KeyCode::Char('a') => self.param_popup = true,
+                    KeyCode::Esc => self.param_popup = false,
                     _ => {}
                 },
 

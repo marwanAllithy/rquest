@@ -7,6 +7,8 @@ pub enum SelectedArea {
     Tabs,
     #[strum(to_string = "url")]
     Url,
+    #[strum(to_string = "params")]
+    Params,
     #[strum(to_string = "tab_content")]
     TabArea,
 }
