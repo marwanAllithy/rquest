@@ -5,17 +5,14 @@ mod headers;
 mod params;
 mod result;
 
-pub use params::ParamsList;
-
+use crate::areas::SelectedArea;
+pub use params::{Param, ParamsList, SelectedParamFeild};
 use ratatui::{
     style::{palette::tailwind, Stylize},
     text::Line,
     widgets::{Block, BorderType, Padding},
 };
 use strum::{Display, EnumIter, FromRepr};
-
-use crate::areas::SelectedArea;
-
 #[derive(Default, Clone, Copy, Display, FromRepr, EnumIter)]
 pub enum SelectedTab {
     #[default]

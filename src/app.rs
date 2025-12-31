@@ -1,6 +1,6 @@
 use crate::{
     areas::SelectedArea,
-    tabs::{ParamsList, SelectedTab},
+    tabs::{Param, ParamsList, SelectedParamFeild, SelectedTab},
 };
 use color_eyre::Result;
 use ratatui::{
@@ -18,7 +18,10 @@ pub struct App {
     pub moving: bool,
     pub history: Option<ListState>,
     pub param_popup: bool,
+    pub seleted_param_feild: SelectedParamFeild,
     pub params: ParamsList,
+    pub param_key_value: String,
+    pub param_value_value: String,
     pub headers: Option<ListState>,
     pub body: Option<ListState>,
     pub auth: Option<ListState>,
@@ -45,20 +48,69 @@ impl App {
             && key.kind == KeyEventKind::Press
         {
             match self.selected_area {
+                //Tab keybind
                 SelectedArea::Tabs => match key.code {
-                    KeyCode::Char('j') | KeyCode::Down => self.next_area(),
-                    KeyCode::Char('k') | KeyCode::Up => self.previous_area(),
-                    KeyCode::Char('l') | KeyCode::Right => self.next_tab(),
-                    KeyCode::Char('h') | KeyCode::Left => self.previous_tab(),
-                    KeyCode::Char('q') | KeyCode::Esc => self.quit(),
-                    _ => {}
-                },
-                SelectedArea::Params => match key.code {
-                    KeyCode::Char('a') => self.param_popup = true,
-                    KeyCode::Esc => self.param_popup = false,
+                    KeyCode::Down => self.next_area(),
+                    KeyCode::Up => self.previous_area(),
+                    KeyCode::Right => self.next_tab(),
+                    KeyCode::Left => self.previous_tab(),
+                    KeyCode::Esc => self.quit(),
                     _ => {}
                 },
 
+                //Params keybind
+                SelectedArea::Params => match key.code {
+                    KeyCode::Char('k') | KeyCode::Up => self.previous_area(),
+                    KeyCode::Char('a') => self.param_popup = true,
+                    KeyCode::Tab => {
+                        if self.seleted_param_feild == SelectedParamFeild::Value {
+                            self.seleted_param_feild = SelectedParamFeild::Key
+                        } else {
+                            self.seleted_param_feild = SelectedParamFeild::Value
+                        }
+                    }
+
+                    event::KeyCode::Char(c) => {
+                        if self.param_popup {
+                            if self.seleted_param_feild == SelectedParamFeild::Key {
+                                self.param_key_value.push(c);
+                            } else {
+                                self.param_value_value.push(c);
+                            }
+                        }
+                    }
+                    event::KeyCode::Backspace => {
+                        if self.param_popup {
+                            if self.seleted_param_feild == SelectedParamFeild::Key {
+                                self.param_key_value.pop();
+                            } else {
+                                self.param_value_value.pop();
+                            }
+                        }
+                    }
+
+                    KeyCode::Esc => self.param_popup = false,
+                    KeyCode::Enter => {
+                        if self.param_popup
+                            && !self.param_key_value.trim().is_empty()
+                            && !self.param_value_value.trim().is_empty()
+                        {
+                            let new_param = Param {
+                                key: self.param_key_value.trim().to_string(),
+                                value: self.param_value_value.trim().to_string(),
+                                enabled: true,
+                            };
+
+                            self.param_key_value.clear();
+                            self.param_value_value.clear();
+                            self.params.items.push(new_param);
+                            self.param_popup = false;
+                        }
+                    }
+                    _ => {}
+                },
+
+                // Url keybind
                 SelectedArea::Url => match key.code {
                     event::KeyCode::Char(c) => {
                         self.url_value.push(c);
@@ -72,15 +124,21 @@ impl App {
                     _ => {}
                 },
 
+                // tab area keybinds
                 SelectedArea::TabArea => match key.code {
-                    KeyCode::Char('j') | KeyCode::Down => self.next_area(),
-                    KeyCode::Char('k') | KeyCode::Up => self.previous_area(),
-                    KeyCode::Char('q') | KeyCode::Esc => self.quit(),
+                    //KeyCode::Char('k') | KeyCode::Up => self.previous_area(),
+                    KeyCode::Down => self.next_area(),
+                    KeyCode::Up => self.previous_area(),
+                    KeyCode::Esc => self.quit(),
                     _ => {}
                 },
             }
         }
         Ok(())
+    }
+
+    pub fn next_feild(&mut self) {
+        self.seleted_param_feild = self.seleted_param_feild.next();
     }
 
     pub fn get_selected_area(&self) -> SelectedArea {

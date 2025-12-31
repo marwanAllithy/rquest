@@ -57,10 +57,16 @@ impl App {
 
     pub fn render_selected_tab(&self, area: Rect, buf: &mut Buffer) {
         match self.selected_tab {
-            SelectedTab::Params => {
-                self.selected_tab
-                    .render_params(self.selected_area, self.params.clone(), area, buf)
-            }
+            SelectedTab::Params => self.selected_tab.render_params(
+                //self.selected_area,
+                self.params.clone(),
+                area,
+                buf,
+                self.param_popup,
+                self.seleted_param_feild,
+                self.param_key_value.clone(),
+                self.param_value_value.clone(),
+            ),
             SelectedTab::Auth => {
                 self.selected_tab
                     .render_auth(self.selected_area, &self.auth, area, buf)
