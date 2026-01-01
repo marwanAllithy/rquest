@@ -12,7 +12,7 @@ use strum::IntoEnumIterator;
 
 use crate::{app::App, areas::SelectedArea, tabs::SelectedTab};
 
-impl Widget for &App {
+impl Widget for &mut App {
     fn render(self, area: Rect, buf: &mut Buffer) {
         //
         // Main app laytouts
@@ -55,11 +55,10 @@ impl App {
             .render(area, buf);
     }
 
-    pub fn render_selected_tab(&self, area: Rect, buf: &mut Buffer) {
+    pub fn render_selected_tab(&mut self, area: Rect, buf: &mut Buffer) {
         match self.selected_tab {
             SelectedTab::Params => self.selected_tab.render_params(
-                //self.selected_area,
-                self.params.clone(),
+                &mut self.params,
                 area,
                 buf,
                 self.param_popup,

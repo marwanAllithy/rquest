@@ -37,7 +37,7 @@ pub enum AppState {
 impl App {
     pub fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
         while self.state == AppState::Running {
-            terminal.draw(|frame| frame.render_widget(&self, frame.area()))?;
+            terminal.draw(|frame| frame.render_widget(&mut self, frame.area()))?;
             self.handle_events()?;
         }
         Ok(())
@@ -60,7 +60,7 @@ impl App {
 
                 //Params keybind
                 SelectedArea::Params => match key.code {
-                    KeyCode::Char('k') | KeyCode::Up => self.previous_area(),
+                     KeyCode::Up => self.previous_area(),
                     KeyCode::Char('a') => self.param_popup = true,
                     KeyCode::Tab => {
                         if self.seleted_param_feild == SelectedParamFeild::Value {
@@ -69,6 +69,14 @@ impl App {
                             self.seleted_param_feild = SelectedParamFeild::Value
                         }
                     }
+
+                    KeyCode::Char('j') => 
+                        self.next_param_row(),
+                    
+
+                    KeyCode::Char('k') => 
+                        self.previous_param_row(),
+                    
 
                     event::KeyCode::Char(c) => {
                         if self.param_popup {
@@ -135,6 +143,14 @@ impl App {
             }
         }
         Ok(())
+    }
+
+    pub fn next_param_row(&mut self) {
+        self.params.state.select_next();
+    }
+
+    pub fn previous_param_row(&mut self) {
+        self.params.state.select_previous();
     }
 
     pub fn next_feild(&mut self) {

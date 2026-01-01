@@ -3,14 +3,14 @@ use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Layout, Rect},
     style::{palette::tailwind, Color, Stylize},
-    widgets::{Block, Clear, ListState, Paragraph, Row, Table, TableState, Widget},
+    widgets::{Block, Clear, Paragraph, Row, Table, TableState, Widget},
 };
 use strum::{Display, EnumIter, FromRepr};
 
 #[derive(Default, Clone, Debug)]
 pub struct ParamsList {
     pub items: Vec<Param>,
-    pub state: ListState,
+    pub state: TableState,
 }
 
 #[derive(Default, Clone, Debug)]
@@ -32,8 +32,7 @@ pub enum SelectedParamFeild {
 impl SelectedTab {
     pub fn render_params(
         self,
-        //selected_area: SelectedArea,
-        params: ParamsList,
+        params: &mut ParamsList,
         area: Rect,
         buf: &mut Buffer,
         show_popup: bool,
@@ -99,7 +98,7 @@ impl SelectedTab {
                 .block(Block::bordered().fg(value_feild_highlight).title(" Value "))
                 .render(value_area, buf);
 
-            Paragraph::new("[Enter] Save  [ESC] Cancel ")
+            Paragraph::new("[Tab] Switch [Enter] Save  [ESC] Cancel ")
                 .alignment(Alignment::Center)
                 .render(buttons_area, buf);
         }
@@ -109,11 +108,11 @@ impl SelectedTab {
         // TODO: make the form a pop up
         // TODO: switch to tables
         let widths = [
-            Constraint::Length(6),
-            Constraint::Length(5),
             Constraint::Length(10),
+            Constraint::Length(10),
+            Constraint::Length(15),
         ];
-        let mut table_state = TableState::default();
+        //let table_state = TableState::default();
 
         let rows: Vec<Row> = params
             .items
@@ -129,8 +128,12 @@ impl SelectedTab {
             .column_spacing(1)
             .header(Row::new(vec!["Active", "Param", "Value"]).top_margin(1))
             .block(Block::new().title("Params"))
+            .row_highlight_style(Color::Green)
+            .column_highlight_style(Color::Green)
+            .cell_highlight_style(Color::Green)
+            .highlight_spacing(ratatui::widgets::HighlightSpacing::Always)
             .highlight_symbol(">>");
 
-        ratatui::widgets::StatefulWidget::render(table, area, buf, &mut table_state);
+        ratatui::widgets::StatefulWidget::render(table, area, buf, &mut params.state);
     }
 }
