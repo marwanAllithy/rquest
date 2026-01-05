@@ -1,8 +1,8 @@
-use crate::{app::App, areas::SelectedArea, tabs::SelectedTab};
+use crate::tabs::SelectedTab;
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Layout, Rect},
-    style::{palette::tailwind, Color, Stylize},
+    style::{Color, Stylize, palette::tailwind},
     widgets::{Block, Clear, Paragraph, Row, Table, TableState, Widget},
 };
 use strum::{Display, EnumIter, FromRepr};
@@ -40,6 +40,10 @@ impl SelectedTab {
         key_value: String,
         value_value: String,
     ) {
+        let padding_block = Block::bordered().padding(ratatui::widgets::Padding::uniform(1));
+
+        let padded_area = padding_block.inner(area);
+        padding_block.render(area, buf);
         if show_popup {
             // Calculate centered popup area inline
             let popup_layout = Layout::vertical([
@@ -78,15 +82,15 @@ impl SelectedTab {
 
             // Highlighting
             let key_feild_highlight = if SelectedParamFeild::Key == selected_param_feild {
-                tailwind::BLUE.c700
+                tailwind::GRAY.c400
             } else {
-                tailwind::BLUE.c200
+                tailwind::GRAY.c200
             };
 
             let value_feild_highlight = if SelectedParamFeild::Value == selected_param_feild {
-                tailwind::BLUE.c700
+                tailwind::GRAY.c400
             } else {
-                tailwind::BLUE.c200
+                tailwind::GRAY.c200
             };
 
             // Render form fields
@@ -103,16 +107,11 @@ impl SelectedTab {
                 .render(buttons_area, buf);
         }
 
-        // TODO: add params.items after doing the adding logic
-        // TODO: Consider using 3 separate lists to make navigation better?
-        // TODO: make the form a pop up
-        // TODO: switch to tables
         let widths = [
             Constraint::Length(10),
             Constraint::Length(10),
             Constraint::Length(15),
         ];
-        //let table_state = TableState::default();
 
         let rows: Vec<Row> = params
             .items
@@ -134,6 +133,6 @@ impl SelectedTab {
             .highlight_spacing(ratatui::widgets::HighlightSpacing::Always)
             .highlight_symbol(">>");
 
-        ratatui::widgets::StatefulWidget::render(table, area, buf, &mut params.state);
+        ratatui::widgets::StatefulWidget::render(table, padded_area, buf, &mut params.state);
     }
 }

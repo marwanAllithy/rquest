@@ -4,7 +4,7 @@ use ratatui::{
         Constraint::{Length, Min, Percentage},
         Layout, Rect,
     },
-    style::{palette::tailwind, Color, Stylize},
+    style::{Color, Stylize, palette::tailwind},
     text::Line,
     widgets::{Block, BorderType, Padding, Paragraph, Tabs, Widget},
 };
@@ -14,7 +14,6 @@ use crate::{app::App, areas::SelectedArea, tabs::SelectedTab};
 
 impl Widget for &mut App {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        //
         // Main app laytouts
         let [sidebar_area, view_area] = Layout::horizontal([Percentage(15), Percentage(85)])
             .margin(1)
@@ -70,10 +69,15 @@ impl App {
                 self.selected_tab
                     .render_auth(self.selected_area, &self.auth, area, buf)
             }
-            SelectedTab::Headers => {
-                self.selected_tab
-                    .render_headers(self.selected_area, &self.headers, area, buf)
-            }
+            SelectedTab::Headers => self.selected_tab.render_headers(
+                &mut self.headers,
+                area,
+                buf,
+                self.header_popup,
+                self.selected_header_feild,
+                self.header_key_value.clone(),
+                self.header_value_value.clone(),
+            ),
             SelectedTab::Body => {
                 self.selected_tab
                     .render_body(self.selected_area, &self.body, area, buf)
@@ -122,15 +126,3 @@ fn render_footer(area: Rect, buf: &mut Buffer) {
         .centered()
         .render(area, buf);
 }
-
-//impl Widget for SelectedTab {
-//    fn render(self, area: Rect, buf: &mut Buffer) {
-//        match self {
-//            Self::Params => self.render_params(area, buf),
-//            Self::Auth => self.render_auth(area, buf),
-//            Self::Headers => self.render_headers(area, buf),
-//            Self::Body => self.render_body(area, buf),
-//            Self::Result => self.render_result(area, buf),
-//        }
-//    }
-//}
