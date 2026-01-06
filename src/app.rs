@@ -46,6 +46,7 @@ pub enum AppState {
     Running,
     Quitting,
 }
+
 impl App {
     pub fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
         while self.state == AppState::Running {
@@ -60,14 +61,13 @@ impl App {
             && key.kind == KeyEventKind::Press
         {
             match self.selected_area {
-                //Tab keybind
+                // Tab selection area
                 SelectedArea::Tabs => match key.code {
                     KeyCode::Char('1') => self.selected_tab = SelectedTab::Params,
                     KeyCode::Char('2') => self.selected_tab = SelectedTab::Headers,
                     KeyCode::Char('3') => self.selected_tab = SelectedTab::Auth,
                     KeyCode::Char('4') => self.selected_tab = SelectedTab::Body,
                     KeyCode::Char('5') => self.selected_tab = SelectedTab::Result,
-
                     KeyCode::Down => self.next_area(),
                     KeyCode::Up => self.previous_area(),
                     KeyCode::Right => self.next_tab(),
@@ -76,160 +76,191 @@ impl App {
                     _ => {}
                 },
 
-                //Params keybind
-                SelectedArea::Params => match key.code {
-                    KeyCode::Up => self.previous_area(),
-                    KeyCode::Char('a') => self.param_popup = true,
-                    KeyCode::Tab => {
-                        if self.seleted_param_feild == SelectedParamFeild::Value {
-                            self.seleted_param_feild = SelectedParamFeild::Key
-                        } else {
-                            self.seleted_param_feild = SelectedParamFeild::Value
-                        }
-                    }
-
-                    KeyCode::Char('j') => self.next_param_row(),
-
-                    KeyCode::Char('k') => self.previous_param_row(),
-
-                    event::KeyCode::Char(c) => {
-                        if self.param_popup {
-                            if self.seleted_param_feild == SelectedParamFeild::Key {
-                                self.param_key_value.push(c);
-                            } else {
-                                self.param_value_value.push(c);
-                            }
-                        }
-                    }
-                    event::KeyCode::Backspace => {
-                        if self.param_popup {
-                            if self.seleted_param_feild == SelectedParamFeild::Key {
-                                self.param_key_value.pop();
-                            } else {
-                                self.param_value_value.pop();
-                            }
-                        }
-                    }
-
-                    KeyCode::Esc => self.param_popup = false,
-                    KeyCode::Enter => {
-                        if self.param_popup
-                            && !self.param_key_value.trim().is_empty()
-                            && !self.param_value_value.trim().is_empty()
-                        {
-                            // adding new params
-                            let new_param = Param {
-                                key: self.param_key_value.trim().to_string(),
-                                value: self.param_value_value.trim().to_string(),
-                                enabled: true,
-                            };
-
-                            self.param_key_value.clear();
-                            self.param_value_value.clear();
-                            self.params.items.push(new_param);
-                            self.param_popup = false;
-                        } else {
-                            // marking a param checked or unchecked
-                            if let Some(index) = self.params.state.selected()
-                                && let Some(item) = self.params.items.get_mut(index)
-                            {
-                                item.enabled = !item.enabled;
-                            }
-                        }
-                    }
-                    _ => {}
-                },
-
-                // Headers
-                SelectedArea::Headers => match key.code {
-                    KeyCode::Up => self.previous_area(),
-                    KeyCode::Char('a') => self.header_popup = true,
-                    KeyCode::Tab => {
-                        if self.selected_header_feild == SelectedHeaderFeild::Value {
-                            self.selected_header_feild = SelectedHeaderFeild::Key
-                        } else {
-                            self.selected_header_feild = SelectedHeaderFeild::Value
-                        }
-                    }
-
-                    KeyCode::Char('j') => self.next_header_row(),
-                    KeyCode::Char('k') => self.previous_header_row(),
-
-                    event::KeyCode::Char(c) => {
-                        if self.header_popup {
-                            if self.selected_header_feild == SelectedHeaderFeild::Key {
-                                self.header_key_value.push(c);
-                            } else {
-                                self.header_value_value.push(c);
-                            }
-                        }
-                    }
-                    event::KeyCode::Backspace => {
-                        if self.header_popup {
-                            if self.seleted_param_feild == SelectedParamFeild::Key {
-                                self.param_key_value.pop();
-                            } else {
-                                self.param_value_value.pop();
-                            }
-                        }
-                    }
-
-                    KeyCode::Esc => self.header_popup = false,
-                    KeyCode::Enter => {
-                        if self.header_popup
-                            && !self.header_key_value.trim().is_empty()
-                            && !self.header_value_value.trim().is_empty()
-                        {
-                            // adding new params
-                            let new_header = Header {
-                                key: self.header_key_value.trim().to_string(),
-                                value: self.header_value_value.trim().to_string(),
-                                enabled: true,
-                            };
-
-                            self.header_key_value.clear();
-                            self.header_value_value.clear();
-                            self.headers.items.push(new_header);
-                            self.header_popup = false;
-                        } else {
-                            // marking a param checked or unchecked
-                            if let Some(index) = self.headers.state.selected()
-                                && let Some(item) = self.headers.items.get_mut(index)
-                            {
-                                item.enabled = !item.enabled;
-                            }
-                        }
-                    }
-                    _ => {}
-                },
-
-                // Url keybind
+                // URL input area
                 SelectedArea::Url => match key.code {
-                    event::KeyCode::Char(c) => {
-                        self.url_value.push(c);
-                    }
-                    event::KeyCode::Backspace => {
-                        self.url_value.pop();
-                    }
+                    KeyCode::Char(c) => self.url_value.push(c),
+                    KeyCode::Backspace => { self.url_value.pop(); },
                     KeyCode::Down => self.next_area(),
                     KeyCode::Up => self.previous_area(),
                     KeyCode::Esc => self.quit(),
                     _ => {}
                 },
 
-                // tab area keybinds
-                SelectedArea::TabArea => match key.code {
-                    //KeyCode::Char('k') | KeyCode::Up => self.previous_area(),
-                    KeyCode::Down => self.next_area(),
-                    KeyCode::Up => self.previous_area(),
-                    KeyCode::Esc => self.quit(),
-                    _ => {}
-                },
+                // Main tab content area - handles all tab-specific logic
+                SelectedArea::TabArea => {
+                    // Global tab area navigation
+                    match key.code {
+                        KeyCode::Up => {
+                            self.previous_area();
+                            return Ok(());
+                        }
+                        KeyCode::Esc => {
+                            // Close any open popups first
+                            if self.param_popup {
+                                self.param_popup = false;
+                                return Ok(());
+                            }
+                            if self.header_popup {
+                                self.header_popup = false;
+                                return Ok(());
+                            }
+                            self.quit();
+                            return Ok(());
+                        }
+                        _ => {}
+                    }
+
+                    // Tab-specific handling
+                    match self.selected_tab {
+                        SelectedTab::Params => self.handle_params_tab(key.code),
+                        SelectedTab::Headers => self.handle_headers_tab(key.code),
+                        SelectedTab::Auth => self.handle_auth_tab(key.code),
+                        SelectedTab::Body => self.handle_body_tab(key.code),
+                        SelectedTab::Result => self.handle_result_tab(key.code),
+                    }
+                }
             }
         }
         Ok(())
     }
 
+    // Params tab specific handling
+    fn handle_params_tab(&mut self, key: KeyCode) {
+        match key {
+            KeyCode::Char('a') if !self.param_popup => {
+                self.param_popup = true;
+            }
+            KeyCode::Tab if self.param_popup => {
+                self.seleted_param_feild = if self.seleted_param_feild == SelectedParamFeild::Value {
+                    SelectedParamFeild::Key
+                } else {
+                    SelectedParamFeild::Value
+                };
+            }
+            KeyCode::Char('j') if !self.param_popup => self.next_param_row(),
+            KeyCode::Char('k') if !self.param_popup => self.previous_param_row(),
+            KeyCode::Char(c) if self.param_popup => {
+                if self.seleted_param_feild == SelectedParamFeild::Key {
+                    self.param_key_value.push(c);
+                } else {
+                    self.param_value_value.push(c);
+                }
+            }
+            KeyCode::Backspace if self.param_popup => {
+                if self.seleted_param_feild == SelectedParamFeild::Key {
+                    self.param_key_value.pop();
+                } else {
+                    self.param_value_value.pop();
+                }
+            }
+            KeyCode::Enter => {
+                if self.param_popup {
+                    if !self.param_key_value.trim().is_empty()
+                        && !self.param_value_value.trim().is_empty()
+                    {
+                        let new_param = Param {
+                            key: self.param_key_value.trim().to_string(),
+                            value: self.param_value_value.trim().to_string(),
+                            enabled: true,
+                        };
+                        self.param_key_value.clear();
+                        self.param_value_value.clear();
+                        self.params.items.push(new_param);
+                        self.param_popup = false;
+                    }
+                } else {
+                    // Toggle param enabled/disabled
+                    if let Some(index) = self.params.state.selected() && let Some(item) = self.params.items.get_mut(index) {
+                            item.enabled = !item.enabled;
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    // Headers tab specific handling
+    fn handle_headers_tab(&mut self, key: KeyCode) {
+        match key {
+            KeyCode::Char('a') if !self.header_popup => {
+                self.header_popup = true;
+            }
+            KeyCode::Tab if self.header_popup => {
+                self.selected_header_feild = if self.selected_header_feild == SelectedHeaderFeild::Value {
+                    SelectedHeaderFeild::Key
+                } else {
+                    SelectedHeaderFeild::Value
+                };
+            }
+            KeyCode::Char('j') if !self.header_popup => self.next_header_row(),
+            KeyCode::Char('k') if !self.header_popup => self.previous_header_row(),
+            KeyCode::Char(c) if self.header_popup => {
+                if self.selected_header_feild == SelectedHeaderFeild::Key {
+                    self.header_key_value.push(c);
+                } else {
+                    self.header_value_value.push(c);
+                }
+            }
+            KeyCode::Backspace if self.header_popup => {
+                if self.selected_header_feild == SelectedHeaderFeild::Key {
+                    self.header_key_value.pop();
+                } else {
+                    self.header_value_value.pop();
+                }
+            }
+            KeyCode::Enter => {
+                if self.header_popup {
+                    if !self.header_key_value.trim().is_empty()
+                        && !self.header_value_value.trim().is_empty()
+                    {
+                        let new_header = Header {
+                            key: self.header_key_value.trim().to_string(),
+                            value: self.header_value_value.trim().to_string(),
+                            enabled: true,
+                        };
+                        self.header_key_value.clear();
+                        self.header_value_value.clear();
+                        self.headers.items.push(new_header);
+                        self.header_popup = false;
+                    }
+                } else {
+                    // Toggle header enabled/disabled
+                    if let Some(index) = self.headers.state.selected() {
+                        if let Some(item) = self.headers.items.get_mut(index) {
+                            item.enabled = !item.enabled;
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    // Auth tab specific handling
+    fn handle_auth_tab(&mut self, key: KeyCode) {
+        match key {
+            // Add auth-specific keybinds here
+            _ => {}
+        }
+    }
+
+    // Body tab specific handling
+    fn handle_body_tab(&mut self, key: KeyCode) {
+        match key {
+            // Add body-specific keybinds here
+            _ => {}
+        }
+    }
+
+    // Result tab specific handling
+    fn handle_result_tab(&mut self, key: KeyCode) {
+        match key {
+            // Add result-specific keybinds here
+            _ => {}
+        }
+    }
+
+    // Helper methods
     pub fn next_header_row(&mut self) {
         self.headers.state.select_next();
     }
@@ -244,10 +275,6 @@ impl App {
 
     pub fn previous_param_row(&mut self) {
         self.params.state.select_previous();
-    }
-
-    pub fn next_feild(&mut self) {
-        self.seleted_param_feild = self.seleted_param_feild.next();
     }
 
     pub fn get_selected_area(&self) -> SelectedArea {

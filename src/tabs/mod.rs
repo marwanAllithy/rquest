@@ -9,7 +9,7 @@ use crate::areas::SelectedArea;
 pub use headers::{Header, HeadersList, SelectedHeaderFeild};
 pub use params::{Param, ParamsList, SelectedParamFeild};
 use ratatui::{
-    style::{Stylize, palette::tailwind},
+    style::{palette::tailwind, Stylize},
     text::Line,
     widgets::{Block, BorderType, Padding},
 };

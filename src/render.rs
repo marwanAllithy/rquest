@@ -65,10 +65,6 @@ impl App {
                 self.param_key_value.clone(),
                 self.param_value_value.clone(),
             ),
-            SelectedTab::Auth => {
-                self.selected_tab
-                    .render_auth(self.selected_area, &self.auth, area, buf)
-            }
             SelectedTab::Headers => self.selected_tab.render_headers(
                 &mut self.headers,
                 area,
@@ -78,6 +74,11 @@ impl App {
                 self.header_key_value.clone(),
                 self.header_value_value.clone(),
             ),
+            SelectedTab::Auth => {
+                self.selected_tab
+                    .render_auth(self.selected_area, &self.auth, area, buf)
+            }
+
             SelectedTab::Body => {
                 self.selected_tab
                     .render_body(self.selected_area, &self.body, area, buf)

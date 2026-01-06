@@ -51,7 +51,7 @@ impl SelectedTab {
                 Constraint::Percentage(30),
                 Constraint::Percentage(35),
             ])
-            .split(area);
+            .split(padded_area);
 
             let popup_area = Layout::horizontal([
                 Constraint::Percentage(25),

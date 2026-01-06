@@ -2,7 +2,7 @@ use crate::tabs::SelectedTab;
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Layout, Rect},
-    style::{Color, Stylize, palette::tailwind},
+    style::{palette::tailwind, Color, Stylize},
     widgets::{Block, Clear, Paragraph, Row, Table, TableState, Widget},
 };
 use strum::{Display, EnumIter, FromRepr};
@@ -51,7 +51,7 @@ impl SelectedTab {
                 Constraint::Percentage(30),
                 Constraint::Percentage(35),
             ])
-            .split(area);
+            .split(padded_area);
 
             let popup_area = Layout::horizontal([
                 Constraint::Percentage(25),
