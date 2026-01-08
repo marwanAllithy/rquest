@@ -2,7 +2,7 @@ use crate::tabs::SelectedTab;
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Layout, Rect},
-    style::{palette::tailwind, Color, Stylize},
+    style::{Color, Stylize, palette::tailwind},
     widgets::{Block, Clear, Paragraph, Row, Table, TableState, Widget},
 };
 use strum::{Display, EnumIter, FromRepr};

@@ -10,10 +10,11 @@ impl SelectedTab {
     pub fn render_body(
         self,
         selected_area: SelectedArea,
-        body: &Option<ratatui::widgets::ListState>,
+        body: String,
         area: Rect,
         buf: &mut Buffer,
     ) {
+        // TODO outsource to external editor
         Paragraph::new("Body Tab - Add request body")
             .block(self.block(selected_area))
             .render(area, buf);

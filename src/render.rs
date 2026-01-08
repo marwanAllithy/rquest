@@ -4,7 +4,7 @@ use ratatui::{
         Constraint::{Length, Min, Percentage},
         Layout, Rect,
     },
-    style::{Color, Stylize, palette::tailwind},
+    style::{palette::tailwind, Color, Stylize},
     text::Line,
     widgets::{Block, BorderType, Padding, Paragraph, Tabs, Widget},
 };
@@ -74,18 +74,21 @@ impl App {
                 self.header_key_value.clone(),
                 self.header_value_value.clone(),
             ),
-            SelectedTab::Auth => {
-                self.selected_tab
-                    .render_auth(self.selected_area, &self.auth, area, buf)
-            }
+            SelectedTab::Auth => self.selected_tab.render_auth(
+                //self.selected_area,
+                self.auth.clone(),
+                area,
+                buf,
+                self.selected_auth_feild,
+            ),
 
             SelectedTab::Body => {
                 self.selected_tab
-                    .render_body(self.selected_area, &self.body, area, buf)
+                    .render_body(self.selected_area, self.body.clone(), area, buf)
             }
             SelectedTab::Result => {
                 self.selected_tab
-                    .render_result(self.selected_area, &self.result, area, buf)
+                    .render_result(self.selected_area, self.result.clone(), area, buf)
             }
         }
     }

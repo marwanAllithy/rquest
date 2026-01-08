@@ -10,7 +10,7 @@ impl SelectedTab {
     pub fn render_result(
         self,
         selected_area: SelectedArea,
-        result: &Option<String>,
+        result: String,
         area: Rect,
         buf: &mut Buffer,
     ) {

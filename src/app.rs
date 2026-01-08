@@ -1,15 +1,14 @@
 use crate::{
     areas::SelectedArea,
     tabs::{
-        Header, HeadersList, Param, ParamsList, SelectedHeaderFeild, SelectedParamFeild,
-        SelectedTab,
+        Auth, Header, HeadersList, Param, ParamsList, SelectedAuthFeild, SelectedHeaderFeild,
+        SelectedParamFeild, SelectedTab,
     },
 };
 use color_eyre::Result;
 use ratatui::{
     DefaultTerminal,
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
-    widgets::ListState,
 };
 
 #[derive(Default)]
@@ -18,26 +17,33 @@ pub struct App {
     pub selected_tab: SelectedTab,
     pub selected_area: SelectedArea,
     pub url_value: String,
-    pub moving: bool,
-    pub history: Option<ListState>,
+    //pub moving: bool,
+    //pub history: Option<ListState>,
+
     // Params
     pub param_popup: bool,
     pub seleted_param_feild: SelectedParamFeild,
     pub params: ParamsList,
     pub param_key_value: String,
     pub param_value_value: String,
+
     // Headers
     pub header_popup: bool,
     pub headers: HeadersList,
     pub header_key_value: String,
     pub header_value_value: String,
     pub selected_header_feild: SelectedHeaderFeild,
+
     // Body
-    pub body: Option<ListState>,
+    pub body: String,
+
     // auth
-    pub auth: Option<ListState>,
+    pub auth: Auth,
+    pub selected_auth_feild: SelectedAuthFeild,
+    pub auth_holder_value: String,
+    pub auth_key_value: String, 
     // result
-    pub result: Option<String>,
+    pub result: String,
 }
 
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
@@ -79,7 +85,9 @@ impl App {
                 // URL input area
                 SelectedArea::Url => match key.code {
                     KeyCode::Char(c) => self.url_value.push(c),
-                    KeyCode::Backspace => { self.url_value.pop(); },
+                    KeyCode::Backspace => {
+                        self.url_value.pop();
+                    }
                     KeyCode::Down => self.next_area(),
                     KeyCode::Up => self.previous_area(),
                     KeyCode::Esc => self.quit(),
@@ -131,7 +139,8 @@ impl App {
                 self.param_popup = true;
             }
             KeyCode::Tab if self.param_popup => {
-                self.seleted_param_feild = if self.seleted_param_feild == SelectedParamFeild::Value {
+                self.seleted_param_feild = if self.seleted_param_feild == SelectedParamFeild::Value
+                {
                     SelectedParamFeild::Key
                 } else {
                     SelectedParamFeild::Value
@@ -170,8 +179,10 @@ impl App {
                     }
                 } else {
                     // Toggle param enabled/disabled
-                    if let Some(index) = self.params.state.selected() && let Some(item) = self.params.items.get_mut(index) {
-                            item.enabled = !item.enabled;
+                    if let Some(index) = self.params.state.selected()
+                        && let Some(item) = self.params.items.get_mut(index)
+                    {
+                        item.enabled = !item.enabled;
                     }
                 }
             }
@@ -186,11 +197,12 @@ impl App {
                 self.header_popup = true;
             }
             KeyCode::Tab if self.header_popup => {
-                self.selected_header_feild = if self.selected_header_feild == SelectedHeaderFeild::Value {
-                    SelectedHeaderFeild::Key
-                } else {
-                    SelectedHeaderFeild::Value
-                };
+                self.selected_header_feild =
+                    if self.selected_header_feild == SelectedHeaderFeild::Value {
+                        SelectedHeaderFeild::Key
+                    } else {
+                        SelectedHeaderFeild::Value
+                    };
             }
             KeyCode::Char('j') if !self.header_popup => self.next_header_row(),
             KeyCode::Char('k') if !self.header_popup => self.previous_header_row(),
@@ -239,7 +251,13 @@ impl App {
     // Auth tab specific handling
     fn handle_auth_tab(&mut self, key: KeyCode) {
         match key {
-            // Add auth-specific keybinds here
+            KeyCode::Tab => {
+                self.selected_auth_feild = if self.selected_auth_feild == SelectedAuthFeild::Value {
+                    SelectedAuthFeild::Holder
+                } else {
+                    SelectedAuthFeild::Value
+                }
+            }
             _ => {}
         }
     }

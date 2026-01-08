@@ -1,21 +1,62 @@
+use crate::{areas::SelectedArea, tabs::SelectedTab};
 use ratatui::{
     buffer::Buffer,
-    layout::Rect,
-    widgets::{Paragraph, Widget},
+    layout::{Constraint::Length, Layout, Rect},
+    style::{palette::tailwind, Stylize},
+    widgets::{Block, Paragraph, Widget},
 };
+use strum::{Display, EnumIter, FromRepr};
 
-use crate::{areas::SelectedArea, tabs::SelectedTab};
+#[derive(Default, Clone)]
+pub struct Auth {
+    pub holder: String,
+    pub value: String,
+}
+
+#[derive(Default, Clone, Copy, Display, FromRepr, EnumIter, PartialEq)]
+pub enum SelectedAuthFeild {
+    #[default]
+    #[strum(to_string = "holder")]
+    Holder,
+    #[strum(to_string = "value")]
+    Value,
+}
 
 impl SelectedTab {
     pub fn render_auth(
         self,
-        selected_area: SelectedArea,
-        auth: &Option<ratatui::widgets::ListState>,
+        //selected_area: SelectedArea,
+        auth: Auth,
         area: Rect,
         buf: &mut Buffer,
+        selected_auth_feild: SelectedAuthFeild,
     ) {
-        Paragraph::new("Body Tab - Add request body")
-            .block(self.block(selected_area))
-            .render(area, buf);
+        let padding_block = Block::bordered().padding(ratatui::widgets::Padding::uniform(1));
+
+        let padded_area = padding_block.inner(area);
+        padding_block.render(area, buf);
+
+        let auth_form = Layout::vertical([Length(3), Length(3)]);
+        let [holder_area, value_area] = auth_form.areas(padded_area);
+        // Highlighting
+        let holder_highlight = if SelectedAuthFeild::Holder == selected_auth_feild {
+            tailwind::GRAY.c400
+        } else {
+            tailwind::GRAY.c200
+        };
+
+        let value_highlight = if SelectedAuthFeild::Value == selected_auth_feild {
+            tailwind::GRAY.c400
+        } else {
+            tailwind::GRAY.c200
+        };
+
+        Paragraph::new(auth.holder)
+            .block(Block::bordered().title(" Holder ").fg(holder_highlight))
+            .render(holder_area, buf);
+
+        Paragraph::new(auth.value)
+            .block(Block::bordered().title(" value ").fg(value_highlight))
+            .render(value_area, buf);
     }
 }
