@@ -4,7 +4,7 @@ use ratatui::{
         Constraint::{Length, Min, Percentage},
         Layout, Rect,
     },
-    style::{palette::tailwind, Color, Stylize},
+    style::{Color, Stylize, palette::tailwind},
     text::Line,
     widgets::{Block, BorderType, Padding, Paragraph, Tabs, Widget},
 };
@@ -34,8 +34,6 @@ impl Widget for &mut App {
         render_sidebar(sidebar_area, buf);
         render_title(title_area, buf);
         self.render_tabs(tabs_area, buf);
-
-        // TODO: impliment the rendering of the selected in a way that works with the others
         self.render_selected_tab(selected_tab_area, buf);
         render_footer(footer_area, buf);
     }
@@ -75,11 +73,11 @@ impl App {
                 self.header_value_value.clone(),
             ),
             SelectedTab::Auth => self.selected_tab.render_auth(
-                //self.selected_area,
-                self.auth.clone(),
                 area,
                 buf,
                 self.selected_auth_feild,
+                self.auth_holder_value.clone(),
+                self.auth_key_value.clone(),
             ),
 
             SelectedTab::Body => {

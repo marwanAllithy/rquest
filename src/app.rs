@@ -1,3 +1,5 @@
+use std::{env, fs};
+
 use crate::{
     areas::SelectedArea,
     tabs::{
@@ -8,7 +10,10 @@ use crate::{
 use color_eyre::Result;
 use ratatui::{
     DefaultTerminal,
-    crossterm::event::{self, Event, KeyCode, KeyEventKind},
+    crossterm::{
+        Command,
+        event::{self, Event, KeyCode, KeyEventKind},
+    },
 };
 
 #[derive(Default)]
@@ -41,7 +46,7 @@ pub struct App {
     pub auth: Auth,
     pub selected_auth_feild: SelectedAuthFeild,
     pub auth_holder_value: String,
-    pub auth_key_value: String, 
+    pub auth_key_value: String,
     // result
     pub result: String,
 }
@@ -237,10 +242,10 @@ impl App {
                     }
                 } else {
                     // Toggle header enabled/disabled
-                    if let Some(index) = self.headers.state.selected() {
-                        if let Some(item) = self.headers.items.get_mut(index) {
-                            item.enabled = !item.enabled;
-                        }
+                    if let Some(index) = self.headers.state.selected()
+                        && let Some(item) = self.headers.items.get_mut(index)
+                    {
+                        item.enabled = !item.enabled;
                     }
                 }
             }
@@ -258,18 +263,64 @@ impl App {
                     SelectedAuthFeild::Value
                 }
             }
+            KeyCode::Char(c) => {
+                if self.selected_auth_feild == SelectedAuthFeild::Value {
+                    self.auth_key_value.push(c);
+                } else {
+                    self.auth_holder_value.push(c);
+                }
+            }
             _ => {}
         }
     }
 
+    // TODO: open eidtor of choice
     // Body tab specific handling
     fn handle_body_tab(&mut self, key: KeyCode) {
         match key {
-            // Add body-specific keybinds here
+            KeyCode::Enter => {
+                if let Err(e) = self.open_editor_for_body() {
+                    eprintln!("Failed to open editor: {}", e);
+                }
+            }
+
             _ => {}
         }
     }
 
+    fn open_editor_for_body(&mut self) -> std::io::Result<()> {
+        // Write current body content to temp file if it exists
+        //if let Some(current_body) = &self.body {
+        //    fs::write(&self.body_file_path, current_body)?;
+        //} else {
+        //    fs::write(&self.body_file_path, "")?;
+        //}
+
+        // Get the user's preferred editor
+        let editor = env::var("EDITOR")
+            .or_else(|_| env::var("VISUAL"))
+            .unwrap_or_else(|_| "nano".to_string());
+        // Open the editor
+        //Command::new(&editor)
+        //    .arg(&self.body_file_path)
+        //    .status()?;
+
+        // Read the edited content back
+        //let edited_content = fs::read_to_string(&self.body_file_path)?;
+
+        // Store it back (you'll need to adjust based on your body structure)
+        // Since body is Option<ListState>, you might want to change it to String
+        // For now, I'll show both approaches:
+
+        // Option 1: If you change body to String
+        // self.body = edited_content;
+
+        // Option 2: If you want to keep the structure, store it separately
+        // Add a new field: pub body_content: String,
+        // self.body_content = edited_content;
+
+        Ok(())
+    }
     // Result tab specific handling
     fn handle_result_tab(&mut self, key: KeyCode) {
         match key {

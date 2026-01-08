@@ -14,6 +14,7 @@ impl SelectedTab {
         area: Rect,
         buf: &mut Buffer,
     ) {
+        // TODO: make a preview of the file.
         // TODO outsource to external editor
         Paragraph::new("Body Tab - Add request body")
             .block(self.block(selected_area))

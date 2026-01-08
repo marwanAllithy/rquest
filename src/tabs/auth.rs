@@ -25,11 +25,11 @@ pub enum SelectedAuthFeild {
 impl SelectedTab {
     pub fn render_auth(
         self,
-        //selected_area: SelectedArea,
-        auth: Auth,
         area: Rect,
         buf: &mut Buffer,
         selected_auth_feild: SelectedAuthFeild,
+        holder_value: String,
+        value_value: String,
     ) {
         let padding_block = Block::bordered().padding(ratatui::widgets::Padding::uniform(1));
 
@@ -38,6 +38,7 @@ impl SelectedTab {
 
         let auth_form = Layout::vertical([Length(3), Length(3)]);
         let [holder_area, value_area] = auth_form.areas(padded_area);
+
         // Highlighting
         let holder_highlight = if SelectedAuthFeild::Holder == selected_auth_feild {
             tailwind::GRAY.c400
@@ -51,11 +52,11 @@ impl SelectedTab {
             tailwind::GRAY.c200
         };
 
-        Paragraph::new(auth.holder)
+        Paragraph::new(holder_value)
             .block(Block::bordered().title(" Holder ").fg(holder_highlight))
             .render(holder_area, buf);
 
-        Paragraph::new(auth.value)
+        Paragraph::new(value_value)
             .block(Block::bordered().title(" value ").fg(value_highlight))
             .render(value_area, buf);
     }
