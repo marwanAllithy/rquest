@@ -1,6 +1,7 @@
-use crate::{areas::SelectedArea, tabs::SelectedTab};
+use crate::{app::App, areas::SelectedArea, tabs::SelectedTab};
 use ratatui::{
     buffer::Buffer,
+    crossterm::event::KeyCode,
     layout::{Constraint::Length, Layout, Rect},
     style::{palette::tailwind, Stylize},
     widgets::{Block, Paragraph, Widget},
@@ -59,5 +60,27 @@ impl SelectedTab {
         Paragraph::new(value_value)
             .block(Block::bordered().title(" value ").fg(value_highlight))
             .render(value_area, buf);
+    }
+}
+
+impl App {
+    pub fn handle_auth_tab(&mut self, key: KeyCode) {
+        match key {
+            KeyCode::Tab => {
+                self.selected_auth_feild = if self.selected_auth_feild == SelectedAuthFeild::Value {
+                    SelectedAuthFeild::Holder
+                } else {
+                    SelectedAuthFeild::Value
+                }
+            }
+            KeyCode::Char(c) => {
+                if self.selected_auth_feild == SelectedAuthFeild::Value {
+                    self.auth_key_value.push(c);
+                } else {
+                    self.auth_holder_value.push(c);
+                }
+            }
+            _ => {}
+        }
     }
 }

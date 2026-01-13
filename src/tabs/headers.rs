@@ -1,9 +1,6 @@
-use crate::tabs::SelectedTab;
+use crate::{app::App, tabs::SelectedTab};
 use ratatui::{
-    buffer::Buffer,
-    layout::{Alignment, Constraint, Layout, Rect},
-    style::{Color, Stylize, palette::tailwind},
-    widgets::{Block, Clear, Paragraph, Row, Table, TableState, Widget},
+    buffer::Buffer, crossterm::event::KeyCode, layout::{Alignment, Constraint, Layout, Rect}, style::{Color, Stylize, palette::tailwind}, widgets::{Block, Clear, Paragraph, Row, Table, TableState, Widget}
 };
 use strum::{Display, EnumIter, FromRepr};
 
@@ -135,4 +132,66 @@ impl SelectedTab {
 
         ratatui::widgets::StatefulWidget::render(table, padded_area, buf, &mut headers.state);
     }
+}
+
+
+impl App {
+pub fn handle_headers_tab(&mut self, key: KeyCode) {
+        match key {
+            KeyCode::Char('a') if !self.header_popup => {
+                self.header_popup = true;
+            }
+            KeyCode::Tab if self.header_popup => {
+                self.selected_header_feild =
+                    if self.selected_header_feild == SelectedHeaderFeild::Value {
+                        SelectedHeaderFeild::Key
+                    } else {
+                        SelectedHeaderFeild::Value
+                    };
+            }
+            KeyCode::Char('j') if !self.header_popup => self.next_header_row(),
+            KeyCode::Char('k') if !self.header_popup => self.previous_header_row(),
+            KeyCode::Char(c) if self.header_popup => {
+                if self.selected_header_feild == SelectedHeaderFeild::Key {
+                    self.header_key_value.push(c);
+                } else {
+                    self.header_value_value.push(c);
+                }
+            }
+            KeyCode::Backspace if self.header_popup => {
+                if self.selected_header_feild == SelectedHeaderFeild::Key {
+                    self.header_key_value.pop();
+                } else {
+                    self.header_value_value.pop();
+                }
+            }
+            KeyCode::Enter => {
+                if self.header_popup {
+                    if !self.header_key_value.trim().is_empty()
+                        && !self.header_value_value.trim().is_empty()
+                    {
+                        let new_header = Header {
+                            key: self.header_key_value.trim().to_string(),
+                            value: self.header_value_value.trim().to_string(),
+                            enabled: true,
+                        };
+                        self.header_key_value.clear();
+                        self.header_value_value.clear();
+                        self.headers.items.push(new_header);
+                        self.header_popup = false;
+                    }
+                } else {
+                    // Toggle header enabled/disabled
+                    if let Some(index) = self.headers.state.selected()
+                        && let Some(item) = self.headers.items.get_mut(index)
+                    {
+                        item.enabled = !item.enabled;
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+
 }
