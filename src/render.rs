@@ -4,7 +4,7 @@ use ratatui::{
         Constraint::{Length, Min, Percentage},
         Layout, Rect,
     },
-    style::{Color, Stylize, palette::tailwind},
+    style::{palette::tailwind, Color, Stylize},
     text::Line,
     widgets::{Block, BorderType, Padding, Paragraph, Tabs, Widget},
 };
@@ -82,7 +82,7 @@ impl App {
 
             SelectedTab::Body => {
                 self.selected_tab
-                    .render_body(self.selected_area, self.body.clone(), area, buf)
+                    .render_body(self.selected_area, &self.body, area, buf)
             }
             SelectedTab::Result => {
                 self.selected_tab

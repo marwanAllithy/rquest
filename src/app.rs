@@ -1,9 +1,7 @@
-use std::{env, fs};
-
 use crate::{
     areas::SelectedArea,
     tabs::{
-        Auth, Header, HeadersList, Param, ParamsList, SelectedAuthFeild, SelectedHeaderFeild,
+        Auth, HeadersList, ParamsList, SelectedAuthFeild, SelectedHeaderFeild,
         SelectedParamFeild, SelectedTab,
     },
 };
@@ -11,12 +9,10 @@ use color_eyre::Result;
 use ratatui::{
     DefaultTerminal,
     crossterm::{
-        Command,
         event::{self, Event, KeyCode, KeyEventKind},
     },
 };
 
-#[derive(Default)]
 pub struct App {
     state: AppState,
     pub selected_tab: SelectedTab,
@@ -41,6 +37,8 @@ pub struct App {
 
     // Body
     pub body: String,
+    pub body_content: String,
+    pub body_file_path: String, 
 
     // auth
     pub auth: Auth,
@@ -50,6 +48,46 @@ pub struct App {
     // result
     pub result: String,
 }
+
+impl Default for App {
+    fn default() -> Self {
+        Self {
+            state: AppState::default(),
+            selected_tab: SelectedTab::default(),
+            selected_area: SelectedArea::default(),
+            url_value: String::new(),
+            
+            // Params
+            param_popup: false,
+            seleted_param_feild: SelectedParamFeild::default(),
+            params: ParamsList::default(),
+            param_key_value: String::new(),
+            param_value_value: String::new(),
+            
+            // Headers
+            header_popup: false,
+            headers: HeadersList::default(),
+            header_key_value: String::new(),
+            header_value_value: String::new(),
+            selected_header_feild: SelectedHeaderFeild::default(),
+            
+            // Body
+            body: String::new(),
+            body_content: String::new(),
+            body_file_path: "/tmp/rquest_body.txt".to_string(),
+            
+            // Auth
+            auth: Auth::default(),
+            selected_auth_feild: SelectedAuthFeild::default(),
+            auth_holder_value: String::new(),
+            auth_key_value: String::new(),
+            
+            // Result
+            result: String::new(),
+        }
+    }
+}
+
 
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub enum AppState {
@@ -136,55 +174,7 @@ impl App {
         }
         Ok(())
     }
-
-        // Auth tab specific handling
-        // TODO: open eidtor of choice
-    // Body tab specific handling
-    fn handle_body_tab(&mut self, key: KeyCode) {
-        match key {
-            KeyCode::Enter => {
-                if let Err(e) = self.open_editor_for_body() {
-                    eprintln!("Failed to open editor: {}", e);
-                }
-            }
-
-            _ => {}
-        }
-    }
-
-    fn open_editor_for_body(&mut self) -> std::io::Result<()> {
-        // Write current body content to temp file if it exists
-        //if let Some(current_body) = &self.body {
-        //    fs::write(&self.body_file_path, current_body)?;
-        //} else {
-        //    fs::write(&self.body_file_path, "")?;
-        //}
-
-        // Get the user's preferred editor
-        let editor = env::var("EDITOR")
-            .or_else(|_| env::var("VISUAL"))
-            .unwrap_or_else(|_| "nano".to_string());
-        // Open the editor
-        //Command::new(&editor)
-        //    .arg(&self.body_file_path)
-        //    .status()?;
-
-        // Read the edited content back
-        //let edited_content = fs::read_to_string(&self.body_file_path)?;
-
-        // Store it back (you'll need to adjust based on your body structure)
-        // Since body is Option<ListState>, you might want to change it to String
-        // For now, I'll show both approaches:
-
-        // Option 1: If you change body to String
-        // self.body = edited_content;
-
-        // Option 2: If you want to keep the structure, store it separately
-        // Add a new field: pub body_content: String,
-        // self.body_content = edited_content;
-
-        Ok(())
-    }
+    
     // Result tab specific handling
     fn handle_result_tab(&mut self, key: KeyCode) {
         match key {
