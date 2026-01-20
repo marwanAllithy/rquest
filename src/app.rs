@@ -12,6 +12,7 @@ use ratatui::{
         event::{self, Event, KeyCode, KeyEventKind},
     },
 };
+use reqwest::Response;
 
 pub struct App {
     state: AppState,
@@ -45,8 +46,9 @@ pub struct App {
     pub selected_auth_feild: SelectedAuthFeild,
     pub auth_holder_value: String,
     pub auth_key_value: String,
+
     // result
-    pub result: String,
+    pub result: String ,
 }
 
 impl Default for App {
@@ -88,7 +90,6 @@ impl Default for App {
     }
 }
 
-
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub enum AppState {
     #[default]
@@ -110,6 +111,7 @@ impl App {
             && key.kind == KeyEventKind::Press
         {
             match self.selected_area {
+
                 // Tab selection area
                 SelectedArea::Tabs => match key.code {
                     KeyCode::Char('1') => self.selected_tab = SelectedTab::Params,
@@ -176,14 +178,7 @@ impl App {
     }
     
     // Result tab specific handling
-    fn handle_result_tab(&mut self, key: KeyCode) {
-        match key {
-            // Add result-specific keybinds here
-            _ => {}
-        }
-    }
-
-    // Helper methods
+        // Helper methods
     pub fn next_header_row(&mut self) {
         self.headers.state.select_next();
     }
