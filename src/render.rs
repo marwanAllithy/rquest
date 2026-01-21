@@ -86,7 +86,7 @@ impl App {
             }
             SelectedTab::Result => {
                 self.selected_tab
-                    .render_result(self.selected_area, self.result.clone(), area, buf)
+                    .render_result(self.selected_area, &self.result, area, buf)
             }
         }
     }

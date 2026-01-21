@@ -1,77 +1,120 @@
-use std::collections::HashMap;
-
-use crossterm::event::KeyCode;
-use ratatui::{
-    buffer::Buffer,
-    layout::Rect,
-    widgets::{Paragraph, Widget, Wrap},
-};
-use reqwest::{Response, Url};
+use std::time::Instant;
 
 use crate::{
     app::App,
     areas::SelectedArea,
     tabs::{Auth, HeadersList, ParamsList, SelectedTab},
 };
-
+use crossterm::event::KeyCode;
+use ratatui::{
+    buffer::Buffer,
+    layout::Rect,
+    text::Text,
+    widgets::{Paragraph, Widget, Wrap},
+};
 impl SelectedTab {
     pub fn render_result(
         self,
         selected_area: SelectedArea,
-        result: String,
+        result: &str,
         area: Rect,
         buf: &mut Buffer,
     ) {
-        // TODO: Add request type: GET, etc
-        //let content = if result.is_empty() {
-        //    "Enter to make request".to_string()
-        //} else {
-        //    result.clone()
-        //};
+        let content = if result.is_empty() {
+            "Press Enter in URL field to make request".to_string()
+        } else {
+            result.to_string()
+        };
 
-        println!("result: {result:?}");
-        Paragraph::new(result)
+        Paragraph::new(Text::from(content)) // Use Text::from for line breaks
             .block(self.block(selected_area))
             .wrap(Wrap { trim: false })
             .render(area, buf);
     }
 }
-
-//-> std::result::Result<Response, Box<dyn std::error::Error>> {
 impl App {
-    pub async fn form_result(
-        &mut self,
-        //url: String,
-        //headers: HeadersList,
-        //params: ParamsList,
-        //auth: Auth,
-        //body: String,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        //let url = Url::parse(&url)?;
-        let client = reqwest::Client::new();
-        let mut map = HashMap::new();
-        map.insert("lang", "rust");
-        map.insert("body", "json");
+    pub fn make_request(&mut self) {
+        let start = Instant::now();
 
-        // TODO: format the params into a hash map
+        // TODO add actual user input
+        let url = "http://httpbin.org/post";
+        //let mut url = self.url_value.clone();
 
-        let res = reqwest::get("https://dummy.restapiexample.com/api/v1/employees/1")
-            .await?
-            .text()
-            .await?;
+        let enabled_params: Vec<_> = self.params.items.iter().filter(|p| p.enabled).collect();
 
-        println!("result: {res:?}");
-        //self.result = res.text().await?;
+        if !enabled_params.is_empty() {
+            //url.push('?');
+            let query: Vec<String> = enabled_params
+                .iter()
+                .map(|p| format!("{}={}", p.key, p.value))
+                .collect();
+            //url.push_str(&query.join("&"));
+        }
 
-        //let text = res;
-        //println!("text: {res:?}");
-        //println!("result data: {res.eesult:?}");
-        Ok(())
+        // Use reqwest::blocking - THIS IS THE BLOCKING PART
+        let client = reqwest::blocking::Client::new();
+        let mut request = client.get(url);
+
+        //// Add headers
+        for header in &self.headers.items {
+            if header.enabled {
+                request = request.header(&header.key, &header.value);
+            }
+        }
+
+        //Add body if present
+        if !self.body.is_empty() {
+            request = request.body(self.body.clone());
+        }
+
+        // Make the BLOCKING request - no .await needed
+        match request.send() {
+            Ok(response) => {
+                let duration = start.elapsed();
+                let status = response.status();
+                let headers = response.headers().clone();
+
+                match response.text() {
+                    Ok(body) => {
+                        let mut result = String::new();
+                        result.push_str(&format!(
+                            "Status: {} {}\n",
+                            status.as_u16(),
+                            status.canonical_reason().unwrap_or("Unknown")
+                        ));
+                        result.push_str(&format!("Time: {:?}\n\n", duration));
+
+                        result.push_str("Headers:\n");
+                        for (name, value) in headers.iter() {
+                            result.push_str(&format!(
+                                "  {}: {}\n",
+                                name,
+                                value.to_str().unwrap_or("Invalid UTF-8")
+                            ));
+                        }
+
+                        result.push_str("\nBody:\n");
+                        result.push_str(&body);
+
+                        self.result = result;
+                    }
+                    Err(e) => {
+                        self.result = format!("Error reading response body: {}", e);
+                    }
+                }
+            }
+            Err(e) => {
+                self.result = format!("Request failed: {}", e);
+            }
+        }
+
+        // Switch to result tab
+        self.selected_tab = SelectedTab::Result;
     }
     pub fn handle_result_tab(&mut self, key: KeyCode) {
         match key {
             KeyCode::Enter => {
-                self.form_result();
+                self.make_request();
             }
             _ => {}
         }
