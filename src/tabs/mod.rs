@@ -7,10 +7,10 @@ mod result;
 
 use crate::areas::SelectedArea;
 pub use auth::{Auth, SelectedAuthFeild};
-pub use headers::{Header, HeadersList, SelectedHeaderFeild};
-pub use params::{Param, ParamsList, SelectedParamFeild};
+pub use headers::{HeadersList, SelectedHeaderFeild};
+pub use params::{ParamsList, SelectedParamFeild};
 use ratatui::{
-    style::{Stylize, palette::tailwind},
+    style::{palette::tailwind, Stylize},
     text::Line,
     widgets::{Block, BorderType, Padding},
 };

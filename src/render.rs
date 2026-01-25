@@ -4,9 +4,9 @@ use ratatui::{
         Constraint::{Length, Min, Percentage},
         Layout, Rect,
     },
-    style::{Color, Stylize, palette::tailwind},
+    style::{palette::tailwind, Color, Stylize},
     text::Line,
-    widgets::{Block, BorderType, Padding, Paragraph, Tabs, Widget},
+    widgets::{Block, BorderType, Paragraph, Tabs, Widget},
 };
 use strum::IntoEnumIterator;
 
@@ -31,10 +31,17 @@ impl Widget for &mut App {
         let [url_area, selected_tab_area] = Layout::vertical([Length(3), Min(0)]).areas(inner_area);
 
         self.render_url(url_area, buf);
-        render_sidebar(sidebar_area, buf);
-        render_title(title_area, buf);
+        self.render_sidebar(
+            self.new_collection_name_value.clone(),
+            self.collection_popup,
+            self.selected_area,
+            sidebar_area,
+            buf,
+        );
         self.render_tabs(tabs_area, buf);
         self.render_selected_tab(selected_tab_area, buf);
+
+        render_title(title_area, buf);
         render_footer(footer_area, buf);
     }
 }
@@ -110,16 +117,6 @@ impl App {
             )
             .render(area, buf);
     }
-}
-fn render_sidebar(area: Rect, buf: &mut Buffer) {
-    Paragraph::new("this will be the sidebar")
-        .block(
-            Block::bordered()
-                .fg(Color::Green)
-                .padding(Padding::uniform(1))
-                .border_type(BorderType::Rounded),
-        )
-        .render(area, buf);
 }
 
 fn render_title(area: Rect, buf: &mut Buffer) {

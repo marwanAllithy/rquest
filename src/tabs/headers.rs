@@ -1,6 +1,10 @@
 use crate::{app::App, tabs::SelectedTab};
 use ratatui::{
-    buffer::Buffer, crossterm::event::KeyCode, layout::{Alignment, Constraint, Layout, Rect}, style::{Color, Stylize, palette::tailwind}, widgets::{Block, Clear, Paragraph, Row, Table, TableState, Widget}
+    buffer::Buffer,
+    crossterm::event::KeyCode,
+    layout::{Alignment, Constraint, Layout, Rect},
+    style::{Color, Stylize, palette::tailwind},
+    widgets::{Block, Clear, Paragraph, Row, Table, TableState, Widget},
 };
 use strum::{Display, EnumIter, FromRepr};
 
@@ -134,9 +138,8 @@ impl SelectedTab {
     }
 }
 
-
 impl App {
-pub fn handle_headers_tab(&mut self, key: KeyCode) {
+    pub fn handle_headers_tab(&mut self, key: KeyCode) {
         match key {
             KeyCode::Char('a') if !self.header_popup => {
                 self.header_popup = true;
@@ -192,6 +195,4 @@ pub fn handle_headers_tab(&mut self, key: KeyCode) {
             _ => {}
         }
     }
-
-
 }

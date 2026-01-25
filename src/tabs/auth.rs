@@ -1,4 +1,4 @@
-use crate::{app::App, areas::SelectedArea, tabs::SelectedTab};
+use crate::{app::App, tabs::SelectedTab};
 use ratatui::{
     buffer::Buffer,
     crossterm::event::KeyCode,

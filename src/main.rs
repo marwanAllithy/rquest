@@ -1,9 +1,9 @@
 use crate::app::App;
 use color_eyre::Result;
-
 mod app;
 mod areas;
 mod render;
+mod sidebar;
 mod tabs;
 
 fn main() -> Result<()> {

@@ -3,6 +3,8 @@ use strum::{Display, EnumIter, FromRepr};
 #[derive(Default, Clone, Copy, Display, FromRepr, EnumIter, PartialEq)]
 pub enum SelectedArea {
     #[default]
+    #[strum(to_string = "sidebar")]
+    Sidebar,
     #[strum(to_string = "tabs")]
     Tabs,
     #[strum(to_string = "url")]

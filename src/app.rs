@@ -12,8 +12,8 @@ use ratatui::{
     DefaultTerminal,
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
 };
-use reqwest::Response;
 
+#[derive(Default)]
 pub struct App {
     state: AppState,
     pub selected_tab: SelectedTab,
@@ -50,46 +50,27 @@ pub struct App {
     // result
     pub result: String,
     pub result_scroll: u16,
+
+    // Collections
+    pub collections: Vec<Collection>,
+    pub curr_collection: Collection,
+    pub collection_popup: bool,
+    pub new_collection_name_value: String,
 }
 
-impl Default for App {
-    fn default() -> Self {
-        Self {
-            state: AppState::default(),
-            selected_tab: SelectedTab::default(),
-            selected_area: SelectedArea::default(),
-            url_value: String::new(),
+#[derive(Default)]
+pub struct Collection {
+    pub title: String,
+    pub requests: Vec<RequestStructs>,
+}
 
-            // Params
-            param_popup: false,
-            seleted_param_feild: SelectedParamFeild::default(),
-            params: ParamsList::default(),
-            param_key_value: String::new(),
-            param_value_value: String::new(),
-
-            // Headers
-            header_popup: false,
-            headers: HeadersList::default(),
-            header_key_value: String::new(),
-            header_value_value: String::new(),
-            selected_header_feild: SelectedHeaderFeild::default(),
-
-            // Body
-            body: String::new(),
-            body_content: String::new(),
-            body_file_path: "/tmp/rquest_body.txt".to_string(),
-
-            // Auth
-            auth: Auth::default(),
-            selected_auth_feild: SelectedAuthFeild::default(),
-            auth_holder_value: String::new(),
-            auth_key_value: String::new(),
-
-            // Result
-            result: String::new(),
-            result_scroll: 0,
-        }
-    }
+#[derive(Default)]
+pub struct RequestStructs {
+    pub url: String,
+    pub params: ParamsList,
+    pub auth: Auth,
+    pub headers: HeadersList,
+    pub body: String,
 }
 
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
@@ -113,6 +94,9 @@ impl App {
             && key.kind == KeyEventKind::Press
         {
             match self.selected_area {
+                // Sidebar
+                SelectedArea::Sidebar => self.handle_sidebar_area(key.code),
+
                 // Tab selection area
                 SelectedArea::Tabs => match key.code {
                     KeyCode::Char('1') => self.selected_tab = SelectedTab::Params,
