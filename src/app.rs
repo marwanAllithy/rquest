@@ -1,16 +1,16 @@
 use crate::{
     areas::SelectedArea,
     tabs::{
-        Auth, HeadersList, ParamsList, SelectedAuthFeild, SelectedHeaderFeild,
-        SelectedParamFeild, SelectedTab,
+        Auth, HeadersList, ParamsList, SelectedAuthFeild, SelectedHeaderFeild, SelectedParamFeild,
+        SelectedTab,
     },
 };
+use arboard::Clipboard;
 use color_eyre::Result;
+use crossterm::event::KeyModifiers;
 use ratatui::{
     DefaultTerminal,
-    crossterm::{
-        event::{self, Event, KeyCode, KeyEventKind},
-    },
+    crossterm::event::{self, Event, KeyCode, KeyEventKind},
 };
 use reqwest::Response;
 
@@ -39,7 +39,7 @@ pub struct App {
     // Body
     pub body: String,
     pub body_content: String,
-    pub body_file_path: String, 
+    pub body_file_path: String,
 
     // auth
     pub auth: Auth,
@@ -48,7 +48,8 @@ pub struct App {
     pub auth_key_value: String,
 
     // result
-    pub result: String ,
+    pub result: String,
+    pub result_scroll: u16,
 }
 
 impl Default for App {
@@ -58,34 +59,35 @@ impl Default for App {
             selected_tab: SelectedTab::default(),
             selected_area: SelectedArea::default(),
             url_value: String::new(),
-            
+
             // Params
             param_popup: false,
             seleted_param_feild: SelectedParamFeild::default(),
             params: ParamsList::default(),
             param_key_value: String::new(),
             param_value_value: String::new(),
-            
+
             // Headers
             header_popup: false,
             headers: HeadersList::default(),
             header_key_value: String::new(),
             header_value_value: String::new(),
             selected_header_feild: SelectedHeaderFeild::default(),
-            
+
             // Body
             body: String::new(),
             body_content: String::new(),
             body_file_path: "/tmp/rquest_body.txt".to_string(),
-            
+
             // Auth
             auth: Auth::default(),
             selected_auth_feild: SelectedAuthFeild::default(),
             auth_holder_value: String::new(),
             auth_key_value: String::new(),
-            
+
             // Result
             result: String::new(),
+            result_scroll: 0,
         }
     }
 }
@@ -111,7 +113,6 @@ impl App {
             && key.kind == KeyEventKind::Press
         {
             match self.selected_area {
-
                 // Tab selection area
                 SelectedArea::Tabs => match key.code {
                     KeyCode::Char('1') => self.selected_tab = SelectedTab::Params,
@@ -129,6 +130,12 @@ impl App {
 
                 // URL input area
                 SelectedArea::Url => match key.code {
+                    KeyCode::Char('v') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                        if let Some(text) = self.get_clipboard_text() {
+                            self.url_value.push_str(&text);
+                        }
+                    }
+
                     KeyCode::Char(c) => self.url_value.push(c),
                     KeyCode::Backspace => {
                         self.url_value.pop();
@@ -176,9 +183,15 @@ impl App {
         }
         Ok(())
     }
-    
+    fn get_clipboard_text(&self) -> Option<String> {
+        if let Ok(mut clipboard) = Clipboard::new() {
+            clipboard.get_text().ok()
+        } else {
+            None
+        }
+    }
     // Result tab specific handling
-        // Helper methods
+    // Helper methods
     pub fn next_header_row(&mut self) {
         self.headers.state.select_next();
     }

@@ -1,10 +1,6 @@
 use std::time::Instant;
 
-use crate::{
-    app::App,
-    areas::SelectedArea,
-    tabs::{Auth, HeadersList, ParamsList, SelectedTab},
-};
+use crate::{app::App, areas::SelectedArea, tabs::SelectedTab};
 use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
@@ -17,6 +13,7 @@ impl SelectedTab {
         self,
         selected_area: SelectedArea,
         result: &str,
+        scroll: u16,
         area: Rect,
         buf: &mut Buffer,
     ) {
@@ -26,9 +23,10 @@ impl SelectedTab {
             result.to_string()
         };
 
-        Paragraph::new(Text::from(content)) // Use Text::from for line breaks
+        Paragraph::new(Text::from(content))
             .block(self.block(selected_area))
             .wrap(Wrap { trim: false })
+            .scroll((scroll, 0))
             .render(area, buf);
     }
 }
@@ -36,22 +34,19 @@ impl App {
     pub fn make_request(&mut self) {
         let start = Instant::now();
 
-        // TODO add actual user input
-        let url = "http://httpbin.org/post";
-        //let mut url = self.url_value.clone();
+        let mut url = self.url_value.clone();
 
         let enabled_params: Vec<_> = self.params.items.iter().filter(|p| p.enabled).collect();
 
         if !enabled_params.is_empty() {
-            //url.push('?');
+            url.push('?');
             let query: Vec<String> = enabled_params
                 .iter()
                 .map(|p| format!("{}={}", p.key, p.value))
                 .collect();
-            //url.push_str(&query.join("&"));
+            url.push_str(&query.join("&"));
         }
 
-        // Use reqwest::blocking - THIS IS THE BLOCKING PART
         let client = reqwest::blocking::Client::new();
         let mut request = client.get(url);
 
@@ -113,6 +108,12 @@ impl App {
     }
     pub fn handle_result_tab(&mut self, key: KeyCode) {
         match key {
+            KeyCode::Char('j') | KeyCode::Down => {
+                self.result_scroll = self.result_scroll.saturating_add(1);
+            }
+            KeyCode::Char('k') | KeyCode::Up => {
+                self.result_scroll = self.result_scroll.saturating_sub(1);
+            }
             KeyCode::Enter => {
                 self.make_request();
             }
