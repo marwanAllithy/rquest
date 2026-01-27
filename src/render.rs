@@ -15,7 +15,7 @@ use crate::{app::App, areas::SelectedArea, tabs::SelectedTab};
 impl Widget for &mut App {
     fn render(self, area: Rect, buf: &mut Buffer) {
         // Main app laytouts
-        let [sidebar_area, view_area] = Layout::horizontal([Percentage(15), Percentage(85)])
+        let [sidebar_area, view_area] = Layout::horizontal([Percentage(20), Percentage(80)])
             .margin(1)
             .areas(area);
 

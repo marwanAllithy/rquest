@@ -6,9 +6,10 @@ use ratatui::{
     style::{palette::tailwind, Stylize},
     widgets::{Block, Paragraph, Widget},
 };
+use serde::{Deserialize, Serialize};
 use strum::{Display, EnumIter, FromRepr};
 
-#[derive(Default, Clone)]
+#[derive(Deserialize, Serialize, Default, Debug, Clone)]
 pub struct Auth {
     pub holder: String,
     pub value: String,

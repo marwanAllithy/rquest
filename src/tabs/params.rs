@@ -6,6 +6,7 @@ use ratatui::{
     style::{Color, Stylize, palette::tailwind},
     widgets::{Block, Clear, Paragraph, Row, Table, TableState, Widget},
 };
+use serde::{Deserialize, Serialize};
 use strum::{Display, EnumIter, FromRepr};
 
 #[derive(Default, Clone, Debug)]
@@ -14,7 +15,7 @@ pub struct ParamsList {
     pub state: TableState,
 }
 
-#[derive(Default, Clone, Debug)]
+#[derive(Default, Deserialize, Serialize,Clone, Debug)]
 pub struct Param {
     pub key: String,
     pub value: String,

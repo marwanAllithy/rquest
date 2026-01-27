@@ -1,4 +1,8 @@
-use crate::{app::App, areas::SelectedArea};
+use crate::{
+    app::App,
+    areas::SelectedArea,
+    tabs::{Auth, Header, Param},
+};
 use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
@@ -6,6 +10,33 @@ use ratatui::{
     style::{palette::tailwind, Stylize},
     widgets::{Block, BorderType, Clear, Padding, Paragraph, Widget},
 };
+use serde::{Deserialize, Serialize};
+use serde_json::Result;
+use uuid::Uuid;
+
+#[derive(Deserialize, Serialize, Debug, Default, Clone)]
+struct Collections {
+    collections: Vec<Collection>,
+}
+
+#[derive(Deserialize, Serialize, Debug, Default, Clone)]
+pub struct Collection {
+    pub title: String,
+    pub requests: Vec<RequestStructs>,
+
+    pub id: String,
+}
+
+#[derive(Deserialize, Serialize, Debug, Default, Clone)]
+pub struct RequestStructs {
+    pub url: String,
+    pub params: Vec<Param>,
+    pub auth: Vec<Auth>,
+    pub headers: Vec<Header>,
+    pub body: String,
+}
+
+// TODO: make formatting function
 
 impl App {
     pub fn render_sidebar(
@@ -26,9 +57,9 @@ impl App {
             .split(area);
 
             let popup_area = Layout::horizontal([
-                Constraint::Percentage(17),
-                Constraint::Percentage(100),
-                Constraint::Percentage(30),
+                Constraint::Percentage(5),  // Less margin on left = wider popup
+                Constraint::Percentage(90), // Wider popup (was probably 50 or less)
+                Constraint::Percentage(5),  // Less margin on right
             ])
             .split(popup_layout[1])[1];
 
@@ -78,6 +109,15 @@ impl App {
             KeyCode::Down => self.next_area(),
             KeyCode::Up => self.previous_area(),
             KeyCode::Esc => self.quit(),
+            KeyCode::Enter => {
+                if self.collection_popup {
+                    // TODO: Make all of the data inside of a data.json file insted of the file
+                    // based matching for the sake of simplicity
+                    let id = Uuid::new_v4();
+                    let title = self.new_collection_name_value.clone();
+                }
+            }
+
             KeyCode::Char(c) if self.collection_popup => {
                 self.new_collection_name_value.push(c);
             }

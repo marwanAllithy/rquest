@@ -1,9 +1,8 @@
 use crate::{
-    areas::SelectedArea,
-    tabs::{
+    areas::SelectedArea, sidebar::Collection, tabs::{
         Auth, HeadersList, ParamsList, SelectedAuthFeild, SelectedHeaderFeild, SelectedParamFeild,
         SelectedTab,
-    },
+    }
 };
 use arboard::Clipboard;
 use color_eyre::Result;
@@ -57,22 +56,6 @@ pub struct App {
     pub collection_popup: bool,
     pub new_collection_name_value: String,
 }
-
-#[derive(Default)]
-pub struct Collection {
-    pub title: String,
-    pub requests: Vec<RequestStructs>,
-}
-
-#[derive(Default)]
-pub struct RequestStructs {
-    pub url: String,
-    pub params: ParamsList,
-    pub auth: Auth,
-    pub headers: HeadersList,
-    pub body: String,
-}
-
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub enum AppState {
     #[default]
