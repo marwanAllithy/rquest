@@ -1,6 +1,7 @@
 use crate::{
     app::App,
     areas::SelectedArea,
+    json::add_collection,
     tabs::{Auth, Header, Param},
 };
 use crossterm::event::KeyCode;
@@ -21,10 +22,9 @@ struct Collections {
 
 #[derive(Deserialize, Serialize, Debug, Default, Clone)]
 pub struct Collection {
+    pub id: String,
     pub title: String,
     pub requests: Vec<RequestStructs>,
-
-    pub id: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Default, Clone)]
@@ -111,11 +111,27 @@ impl App {
             KeyCode::Esc => self.quit(),
             KeyCode::Enter => {
                 if self.collection_popup {
-                    // TODO: Make all of the data inside of a data.json file insted of the file
-                    // based matching for the sake of simplicity
                     let id = Uuid::new_v4();
                     let title = self.new_collection_name_value.clone();
+                    let new_collection = Collection {
+                        id: id.to_string(),
+                        title,
+                        requests: Vec::new(),
+                    };
+                    match add_collection(new_collection) {
+                        Ok(_) => {
+                            eprintln!("Collection saved successfully!");
+                            self.new_collection_name_value.clear();
+                            self.collection_popup = false;
+                        }
+                        Err(e) => {
+                            eprintln!("Failed to save collection: {}", e);
+                        }
+                    }
                 }
+            }
+            KeyCode::Backspace if self.collection_popup => {
+                self.new_collection_name_value.pop();
             }
 
             KeyCode::Char(c) if self.collection_popup => {
