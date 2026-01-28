@@ -1,7 +1,7 @@
 use crate::{
     app::App,
     areas::SelectedArea,
-    json::add_collection,
+    json::{add_collection, fetch_collections},
     tabs::{Auth, Header, Param},
 };
 use crossterm::event::KeyCode;
@@ -9,10 +9,10 @@ use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Layout, Rect},
     style::{palette::tailwind, Stylize},
-    widgets::{Block, BorderType, Clear, Padding, Paragraph, Widget},
+    text::ToSpan,
+    widgets::{Block, BorderType, Borders, Clear, List, Padding, Paragraph, Widget},
 };
 use serde::{Deserialize, Serialize};
-use serde_json::Result;
 use uuid::Uuid;
 
 #[derive(Deserialize, Serialize, Debug, Default, Clone)]
@@ -40,13 +40,41 @@ pub struct RequestStructs {
 
 impl App {
     pub fn render_sidebar(
-        &self,
+        &mut self,
         title_value: String,
         show_popup: bool,
         selected_area: SelectedArea,
         area: Rect,
         buf: &mut Buffer,
     ) {
+        match fetch_collections() {
+            Ok(collections) => {
+                let notes_list = List::new(collections.iter().map(|x| x.title.to_span()))
+                    .block(
+                        Block::default()
+                            .border_type(BorderType::Thick)
+                            .borders(Borders::ALL)
+                            .fg(tailwind::GREEN.c200)
+                            .padding(Padding::uniform(1)),
+                    )
+                    .highlight_symbol(">");
+
+                ratatui::widgets::StatefulWidget::render(
+                    notes_list,
+                    area,
+                    buf,
+                    &mut self.collections_list_state,
+                );
+            }
+            Err(e) => {
+                eprintln!("Failed to read collections: {}", e);
+            }
+        }
+
+        //.highlight_style(Style::default().fg(Color::Green));
+
+        //frame.render_stateful_widget(notes_list, sidebar_area, &mut app_state.note_list_state);
+
         if show_popup {
             // Calculate centered popup area inline
             let popup_layout = Layout::vertical([
@@ -91,7 +119,7 @@ impl App {
         } else {
             tailwind::GREEN.c700
         };
-        Paragraph::new("this will be the sidebar")
+        Paragraph::new("")
             .block(
                 Block::bordered()
                     .fg(highlight_color)
@@ -108,7 +136,14 @@ impl App {
 
             KeyCode::Down => self.next_area(),
             KeyCode::Up => self.previous_area(),
-            KeyCode::Esc => self.quit(),
+            KeyCode::Esc => {
+                if self.collection_popup {
+                    self.collection_popup = false
+                } else {
+                    self.quit()
+                }
+            }
+
             KeyCode::Enter => {
                 if self.collection_popup {
                     let id = Uuid::new_v4();
@@ -120,7 +155,7 @@ impl App {
                     };
                     match add_collection(new_collection) {
                         Ok(_) => {
-                            eprintln!("Collection saved successfully!");
+                            //eprintln!("Collection saved successfully!");
                             self.new_collection_name_value.clear();
                             self.collection_popup = false;
                         }

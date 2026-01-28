@@ -35,10 +35,13 @@ pub fn init_data_file() -> std::io::Result<()> {
 }
 
 pub fn fetch_collections() -> std::io::Result<Vec<Collection>> {
-    let path = ".local/share/reqwest/data.json";
-    let data = fs::read_to_string(path)?;
-    let res: Vec<Collection> = from_str(&data)?;
-    Ok(res)
+    let path = get_data_path();
+    init_data_file()?;
+
+    let data = fs::read_to_string(&path)?;
+    let collections: Vec<Collection> = serde_json::from_str(&data)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
+    Ok(collections)
 }
 
 pub fn fetch_collection() {}
@@ -59,4 +62,4 @@ pub fn add_collection(new_collection: Collection) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn edit_collectiom() {}
+pub fn edit_collection() {}

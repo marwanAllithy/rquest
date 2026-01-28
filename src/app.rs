@@ -1,8 +1,10 @@
 use crate::{
-    areas::SelectedArea, sidebar::Collection, tabs::{
+    areas::SelectedArea,
+    sidebar::Collection,
+    tabs::{
         Auth, HeadersList, ParamsList, SelectedAuthFeild, SelectedHeaderFeild, SelectedParamFeild,
         SelectedTab,
-    }
+    },
 };
 use arboard::Clipboard;
 use color_eyre::Result;
@@ -10,6 +12,7 @@ use crossterm::event::KeyModifiers;
 use ratatui::{
     DefaultTerminal,
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
+    widgets::ListState,
 };
 
 #[derive(Default)]
@@ -51,6 +54,7 @@ pub struct App {
     pub result_scroll: u16,
 
     // Collections
+    pub collections_list_state: ListState,
     pub collections: Vec<Collection>,
     pub curr_collection: Collection,
     pub collection_popup: bool,
@@ -122,7 +126,10 @@ impl App {
                             return Ok(());
                         }
                         KeyCode::Esc => {
-                            // Close any open popups first
+                            if self.collection_popup {
+                                self.param_popup = false;
+                                return Ok(());
+                            }
                             if self.param_popup {
                                 self.param_popup = false;
                                 return Ok(());
