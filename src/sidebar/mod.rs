@@ -136,6 +136,8 @@ impl App {
 
             KeyCode::Down => self.next_area(),
             KeyCode::Up => self.previous_area(),
+            KeyCode::Char('j') if !self.param_popup => self.next_collection(),
+            KeyCode::Char('k') if !self.param_popup => self.previous_collection(),
             KeyCode::Esc => {
                 if self.collection_popup {
                     self.collection_popup = false
@@ -174,5 +176,13 @@ impl App {
             }
             _ => {}
         }
+    }
+
+    pub fn next_collection(&mut self) {
+        self.collections_list_state.select_next();
+    }
+
+    pub fn previous_collection(&mut self) {
+        self.collections_list_state.select_previous();
     }
 }
