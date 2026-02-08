@@ -1,24 +1,27 @@
 use crate::{
     app::App,
     areas::SelectedArea,
-    json::{add_collection, fetch_collections},
-    tabs::{Auth, Header, Param},
+    json::{
+        add_collection, add_request, del_request, fetch_collection, fetch_collection_by_index,
+        fetch_collections,
+    },
+    tabs::{Auth, Header, Param, SelectedTab},
 };
 use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Layout, Rect},
-    style::{palette::tailwind, Stylize},
+    style::{Stylize, palette::tailwind},
     text::ToSpan,
     widgets::{Block, BorderType, Borders, Clear, List, Padding, Paragraph, Widget},
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Deserialize, Serialize, Debug, Default, Clone)]
-struct Collections {
-    collections: Vec<Collection>,
-}
+//#[derive(Deserialize, Serialize, Debug, Default, Clone)]
+//struct Collections {
+//    collections: Vec<Collection>,
+//}
 
 #[derive(Deserialize, Serialize, Debug, Default, Clone)]
 pub struct Collection {
@@ -31,7 +34,7 @@ pub struct Collection {
 pub struct RequestStructs {
     pub url: String,
     pub params: Vec<Param>,
-    pub auth: Vec<Auth>,
+    pub auth: Auth,
     pub headers: Vec<Header>,
     pub body: String,
 }
@@ -47,30 +50,6 @@ impl App {
         area: Rect,
         buf: &mut Buffer,
     ) {
-        match fetch_collections() {
-            Ok(collections) => {
-                let notes_list = List::new(collections.iter().map(|x| x.title.to_span()))
-                    .block(
-                        Block::default()
-                            .border_type(BorderType::Thick)
-                            .borders(Borders::ALL)
-                            .fg(tailwind::GREEN.c200)
-                            .padding(Padding::uniform(1)),
-                    )
-                    .highlight_symbol(">");
-
-                ratatui::widgets::StatefulWidget::render(
-                    notes_list,
-                    area,
-                    buf,
-                    &mut self.collections_list_state,
-                );
-            }
-            Err(e) => {
-                eprintln!("Failed to read collections: {}", e);
-            }
-        }
-
         //.highlight_style(Style::default().fg(Color::Green));
 
         //frame.render_stateful_widget(notes_list, sidebar_area, &mut app_state.note_list_state);
@@ -114,30 +93,163 @@ impl App {
                 .alignment(Alignment::Center)
                 .render(buttons_area, buf);
         }
-        let highlight_color = if SelectedArea::Sidebar == selected_area {
-            tailwind::GREEN.c200
+        if let Some(collection) = &self.curr_collection {
+            // when collection is selected
+            let highlight_color = if SelectedArea::Sidebar == selected_area {
+                tailwind::GREEN.c200
+            } else {
+                tailwind::GREEN.c700
+            };
+
+            let curr_collection_requests_list =
+                List::new(collection.requests.iter().map(|x| x.url.to_span()))
+                    .block(
+                        Block::default()
+                            .border_type(BorderType::Thick)
+                            .borders(Borders::ALL)
+                            .fg(tailwind::GREEN.c200)
+                            .padding(Padding::uniform(1)),
+                    )
+                    .highlight_symbol(">");
+
+            ratatui::widgets::StatefulWidget::render(
+                curr_collection_requests_list,
+                area,
+                buf,
+                &mut self.curr_collection_request_list_state,
+            );
+
+            Block::bordered()
+                .title(format!(" {} ", collection.title))
+                .fg(highlight_color)
+                .padding(Padding::uniform(1))
+                .border_type(BorderType::Rounded)
+                .render(area, buf);
         } else {
-            tailwind::GREEN.c700
-        };
-        Paragraph::new("")
-            .block(
-                Block::bordered()
-                    .fg(highlight_color)
-                    .padding(Padding::uniform(1))
-                    .border_type(BorderType::Rounded),
-            )
-            .render(area, buf);
+            // collections list
+
+            let highlight_color = if SelectedArea::Sidebar == selected_area {
+                tailwind::GREEN.c200
+            } else {
+                tailwind::GREEN.c700
+            };
+
+            match fetch_collections() {
+                Ok(collections) => {
+                    let notes_list = List::new(collections.iter().map(|x| x.title.to_span()))
+                        .block(
+                            Block::default()
+                                .border_type(BorderType::Thick)
+                                .borders(Borders::ALL)
+                                .fg(tailwind::GREEN.c200)
+                                .padding(Padding::uniform(1)),
+                        )
+                        .highlight_symbol(">");
+
+                    ratatui::widgets::StatefulWidget::render(
+                        notes_list,
+                        area,
+                        buf,
+                        &mut self.collections_list_state,
+                    );
+                }
+                Err(e) => {
+                    eprintln!("Failed to read collections: {}", e);
+                }
+            }
+
+            Block::bordered()
+                .title(" Collections ")
+                .fg(highlight_color)
+                .padding(Padding::uniform(1))
+                .border_type(BorderType::Rounded)
+                .render(area, buf);
+        }
     }
+
+    // keybinds
     pub fn handle_sidebar_area(&mut self, key: KeyCode) {
         match key {
             KeyCode::Char('a') if !self.collection_popup => {
-                self.collection_popup = true;
+                if let Some(collection) = &self.curr_collection {
+                    // new request
+                    let new_request = RequestStructs {
+                        url: "https://example.com/".to_string(),
+                        params: Vec::new(),
+                        auth: Auth::default(),
+                        headers: Vec::new(),
+                        body: String::new(),
+                    };
+
+                    match add_request(collection.id.clone(), new_request.clone()) {
+                        Ok(_) => {
+                            // Refresh the current collection
+                            if let Ok(updated) = fetch_collection(collection.id.clone()) {
+                                self.curr_collection = Some(updated);
+                                self.load_request(&new_request);
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("Failed to add request: {}", e);
+                        }
+                    }
+                    //}
+                } else {
+                    self.collection_popup = true;
+                }
+            }
+
+            KeyCode::Char('d') if !self.collection_popup => {
+                if let Some(collection) = &self.curr_collection
+                    && let Some(index) = self.curr_collection_request_list_state.selected()
+                {
+                    // Deleted a request from collection
+
+                    match del_request(collection.id.clone(), index) {
+                        Ok(_) => {
+                            // Refresh the current collection
+                            if let Ok(updated) = fetch_collection(collection.id.clone()) {
+                                self.curr_collection = Some(updated.clone());
+
+                                // Fix the selection
+                                if updated.requests.is_empty() {
+                                    self.curr_collection_request_list_state.select(None);
+                                } else if index >= updated.requests.len() {
+                                    self.curr_collection_request_list_state
+                                        .select(Some(updated.requests.len() - 1));
+                                } else {
+                                    self.curr_collection_request_list_state.select(Some(index));
+                                }
+                            }
+                            eprintln!("Successfully deleted request");
+                        }
+                        Err(e) => {
+                            eprintln!("Failed to delete request: {}", e);
+                        }
+                    }
+                }
             }
 
             KeyCode::Down => self.next_area(),
             KeyCode::Up => self.previous_area(),
-            KeyCode::Char('j') if !self.param_popup => self.next_collection(),
-            KeyCode::Char('k') if !self.param_popup => self.previous_collection(),
+            KeyCode::Char('j') => {
+                if !self.param_popup {
+                    if self.curr_collection.is_some() {
+                        self.next_collection_request();
+                    } else {
+                        self.next_collection()
+                    }
+                }
+            }
+            KeyCode::Char('k') => {
+                if !self.param_popup {
+                    if self.curr_collection.is_some() {
+                        self.previous_collection_request();
+                    } else {
+                        self.previous_collection()
+                    }
+                }
+            }
             KeyCode::Esc => {
                 if self.collection_popup {
                     self.collection_popup = false
@@ -147,6 +259,7 @@ impl App {
             }
 
             KeyCode::Enter => {
+                // logic for when collecting popup is open
                 if self.collection_popup {
                     let id = Uuid::new_v4();
                     let title = self.new_collection_name_value.clone();
@@ -165,6 +278,21 @@ impl App {
                             eprintln!("Failed to save collection: {}", e);
                         }
                     }
+                } else {
+                    // else, do the logic for selecting a collection
+                    if let Some(index) = self.collections_list_state.selected() {
+                        match fetch_collection_by_index(index) {
+                            Ok(collection) => {
+                                //eprintln!("Loaded collection: {:?}", collection);
+                                self.curr_collection = Some(collection);
+                            }
+                            Err(e) => {
+                                eprintln!("Failed to load collection: {:?}", e);
+                            }
+                        }
+                    } else {
+                        eprintln!("No collection selected");
+                    }
                 }
             }
             KeyCode::Backspace if self.collection_popup => {
@@ -178,6 +306,29 @@ impl App {
         }
     }
 
+    pub fn load_request(&mut self, request: &RequestStructs) {
+        self.url_value = request.url.clone();
+        self.params.items = request.params.clone();
+        self.headers.items = request.headers.clone();
+        self.body = request.body.clone();
+
+        self.auth = request.auth.clone();
+        self.param_popup = false;
+        self.header_popup = false;
+        self.result.clear();
+        self.result_scroll = 0;
+
+        self.selected_area = SelectedArea::Url;
+        self.selected_tab = SelectedTab::Params;
+    }
+
+    pub fn next_collection_request(&mut self) {
+        self.curr_collection_request_list_state.select_next();
+    }
+
+    pub fn previous_collection_request(&mut self) {
+        self.curr_collection_request_list_state.select_previous();
+    }
     pub fn next_collection(&mut self) {
         self.collections_list_state.select_next();
     }

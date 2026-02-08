@@ -4,7 +4,7 @@ use ratatui::{
         Constraint::{Length, Min, Percentage},
         Layout, Rect,
     },
-    style::{palette::tailwind, Color, Stylize},
+    style::{Color, Stylize, palette::tailwind},
     text::Line,
     widgets::{Block, BorderType, Paragraph, Tabs, Widget},
 };

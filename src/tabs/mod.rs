@@ -10,7 +10,7 @@ pub use auth::{Auth, SelectedAuthFeild};
 pub use headers::{Header, HeadersList, SelectedHeaderFeild};
 pub use params::{Param, ParamsList, SelectedParamFeild};
 use ratatui::{
-    style::{palette::tailwind, Stylize},
+    style::{Stylize, palette::tailwind},
     text::Line,
     widgets::{Block, BorderType, Padding},
 };

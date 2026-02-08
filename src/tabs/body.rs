@@ -28,6 +28,8 @@ impl SelectedTab {
     }
 }
 
+// TODO: make the body address dynamic
+
 impl App {
     pub fn handle_body_tab(&mut self, key: KeyCode) {
         // Changed to &mut self

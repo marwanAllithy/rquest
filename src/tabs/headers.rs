@@ -15,7 +15,7 @@ pub struct HeadersList {
     pub state: TableState,
 }
 
-#[derive(Default,Deserialize, Serialize, Clone, Debug)]
+#[derive(Default, Deserialize, Serialize, Clone, Debug)]
 pub struct Header {
     pub key: String,
     pub value: String,

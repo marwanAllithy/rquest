@@ -56,7 +56,8 @@ pub struct App {
     // Collections
     pub collections_list_state: ListState,
     pub collections: Vec<Collection>,
-    pub curr_collection: Collection,
+    pub curr_collection: Option< Collection >,
+    pub curr_collection_request_list_state: ListState, 
     pub collection_popup: bool,
     pub new_collection_name_value: String,
 }

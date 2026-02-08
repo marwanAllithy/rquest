@@ -15,7 +15,7 @@ pub struct ParamsList {
     pub state: TableState,
 }
 
-#[derive(Default, Deserialize, Serialize,Clone, Debug)]
+#[derive(Default, Deserialize, Serialize, Clone, Debug)]
 pub struct Param {
     pub key: String,
     pub value: String,
