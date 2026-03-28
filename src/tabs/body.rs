@@ -11,7 +11,7 @@ impl SelectedTab {
     pub fn render_body(
         self,
         selected_area: SelectedArea,
-        body: &String, // Changed to reference
+        body: &String, // Changed to referencd
         area: Rect,
         buf: &mut Buffer,
     ) {

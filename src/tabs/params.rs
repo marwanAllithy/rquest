@@ -143,54 +143,67 @@ impl App {
     pub fn handle_params_tab(&mut self, key: KeyCode) {
         match key {
             KeyCode::Char('a') if !self.param_popup => {
-                self.param_popup = true;
+                if !self.moving {
+                    self.param_popup = true;
+                }
             }
             KeyCode::Tab if self.param_popup => {
-                self.seleted_param_feild = if self.seleted_param_feild == SelectedParamFeild::Value
-                {
-                    SelectedParamFeild::Key
-                } else {
-                    SelectedParamFeild::Value
-                };
+                if !self.moving {
+                    self.seleted_param_feild =
+                        if self.seleted_param_feild == SelectedParamFeild::Value {
+                            SelectedParamFeild::Key
+                        } else {
+                            SelectedParamFeild::Value
+                        };
+                }
             }
+
             KeyCode::Char('j') if !self.param_popup => self.next_param_row(),
             KeyCode::Char('k') if !self.param_popup => self.previous_param_row(),
             KeyCode::Char(c) if self.param_popup => {
-                if self.seleted_param_feild == SelectedParamFeild::Key {
-                    self.param_key_value.push(c);
-                } else {
-                    self.param_value_value.push(c);
+                if !self.moving {
+                    if self.seleted_param_feild == SelectedParamFeild::Key {
+                        self.param_key_value.push(c);
+                    } else {
+                        self.param_value_value.push(c);
+                    }
                 }
             }
             KeyCode::Backspace if self.param_popup => {
-                if self.seleted_param_feild == SelectedParamFeild::Key {
-                    self.param_key_value.pop();
-                } else {
-                    self.param_value_value.pop();
+                if !self.moving {
+                    if self.seleted_param_feild == SelectedParamFeild::Key {
+                        self.param_key_value.pop();
+                    } else {
+                        self.param_value_value.pop();
+                    }
                 }
             }
             KeyCode::Enter => {
-                if self.param_popup {
-                    if !self.param_key_value.trim().is_empty()
-                        && !self.param_value_value.trim().is_empty()
-                    {
-                        let new_param = Param {
-                            key: self.param_key_value.trim().to_string(),
-                            value: self.param_value_value.trim().to_string(),
-                            enabled: true,
-                        };
-                        self.param_key_value.clear();
-                        self.param_value_value.clear();
-                        self.params.items.push(new_param);
-                        self.param_popup = false;
+                if !self.moving {
+                    if self.param_popup {
+                        if !self.param_key_value.trim().is_empty()
+                            && !self.param_value_value.trim().is_empty()
+                        {
+                            let new_param = Param {
+                                key: self.param_key_value.trim().to_string(),
+                                value: self.param_value_value.trim().to_string(),
+                                enabled: true,
+                            };
+                            self.param_key_value.clear();
+                            self.param_value_value.clear();
+                            self.params.items.push(new_param);
+                            self.param_popup = false;
+                        }
+                    } else {
+                        // Toggle param enabled/disabled
+                        if let Some(index) = self.params.state.selected()
+                            && let Some(item) = self.params.items.get_mut(index)
+                        {
+                            item.enabled = !item.enabled;
+                        }
                     }
                 } else {
-                    // Toggle param enabled/disabled
-                    if let Some(index) = self.params.state.selected()
-                        && let Some(item) = self.params.items.get_mut(index)
-                    {
-                        item.enabled = !item.enabled;
-                    }
+                    self.moving = false
                 }
             }
             _ => {}

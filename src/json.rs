@@ -1,10 +1,6 @@
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::{fs, path::PathBuf};
 
 use dirs::data_local_dir;
-use serde_json::from_str;
 
 use crate::sidebar::{Collection, RequestStructs};
 
@@ -143,4 +139,38 @@ pub fn del_request(collection_id: String, index: usize) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn edit_collection() {}
+pub fn save_request(
+    uuid: String,
+    index: usize,
+    new_request: RequestStructs,
+) -> std::io::Result<Collection> {
+    let path = get_data_path();
+    init_data_file()?;
+
+    let data = fs::read_to_string(&path)?;
+    let mut collections: Vec<Collection> = serde_json::from_str(&data)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
+
+    let collection_index = collections
+        .iter()
+        .position(|c| c.id == uuid)
+        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::NotFound, "Collection not found"))?;
+
+    if index >= collections[collection_index].requests.len() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "Request index out of bounds",
+        ));
+    }
+
+    collections[collection_index].requests[index] = new_request;
+
+    let result = collections[collection_index].clone();
+
+    let json = serde_json::to_string_pretty(&collections)?;
+    fs::write(&path, json)?;
+
+    Ok(result)
+}
+
+//pub fn edit_collection() {}

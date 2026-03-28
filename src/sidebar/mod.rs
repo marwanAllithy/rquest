@@ -230,8 +230,28 @@ impl App {
                 }
             }
 
-            KeyCode::Down => self.next_area(),
-            KeyCode::Up => self.previous_area(),
+            KeyCode::Down => {
+                if self.moving {
+                    self.next_area()
+                } else {
+                    if self.curr_collection.is_some() {
+                        self.next_collection_request();
+                    } else {
+                        self.next_collection()
+                    }
+                }
+            }
+            KeyCode::Up => {
+                if self.moving {
+                    self.previous_area()
+                } else {
+                    if self.curr_collection.is_some() {
+                        self.previous_collection_request();
+                    } else {
+                        self.previous_collection()
+                    }
+                }
+            }
             KeyCode::Char('j') => {
                 if !self.param_popup {
                     if self.curr_collection.is_some() {
@@ -254,7 +274,12 @@ impl App {
                 if self.collection_popup {
                     self.collection_popup = false
                 } else {
-                    self.quit()
+                    if self.moving {
+                        println!("movement made {:?}", self.moving);
+                        self.moving = false
+                    } else {
+                        self.quit()
+                    }
                 }
             }
 
@@ -278,6 +303,13 @@ impl App {
                             eprintln!("Failed to save collection: {}", e);
                         }
                     }
+                } else if let Some(collection) = &self.curr_collection {
+                    // If inside a collection, load the selected request
+                    if let Some(index) = self.curr_collection_request_list_state.selected() {
+                        if let Some(request) = collection.requests.get(index).cloned() {
+                            self.load_request(&request);
+                        }
+                    }
                 } else {
                     // else, do the logic for selecting a collection
                     if let Some(index) = self.collections_list_state.selected() {
@@ -287,7 +319,7 @@ impl App {
                                 self.curr_collection = Some(collection);
                             }
                             Err(e) => {
-                                eprintln!("Failed to load collection: {:?}", e);
+                                eprintln!("Failed to load collection: {}", e);
                             }
                         }
                     } else {
@@ -320,6 +352,7 @@ impl App {
 
         self.selected_area = SelectedArea::Url;
         self.selected_tab = SelectedTab::Params;
+        self.moving = true;
     }
 
     pub fn next_collection_request(&mut self) {

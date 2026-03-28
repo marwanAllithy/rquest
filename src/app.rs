@@ -21,7 +21,10 @@ pub struct App {
     pub selected_tab: SelectedTab,
     pub selected_area: SelectedArea,
     pub url_value: String,
-    //pub moving: bool,
+
+    // nav
+    pub moving: bool,
+
     //pub history: Option<ListState>,
 
     // Params
@@ -56,8 +59,8 @@ pub struct App {
     // Collections
     pub collections_list_state: ListState,
     pub collections: Vec<Collection>,
-    pub curr_collection: Option< Collection >,
-    pub curr_collection_request_list_state: ListState, 
+    pub curr_collection: Option<Collection>,
+    pub curr_collection_request_list_state: ListState,
     pub collection_popup: bool,
     pub new_collection_name_value: String,
 }
@@ -92,11 +95,24 @@ impl App {
                     KeyCode::Char('3') => self.selected_tab = SelectedTab::Auth,
                     KeyCode::Char('4') => self.selected_tab = SelectedTab::Body,
                     KeyCode::Char('5') => self.selected_tab = SelectedTab::Result,
-                    KeyCode::Down => self.next_area(),
+                    KeyCode::Down => {
+                        if self.moving {
+                            self.next_area()
+                        }
+                    }
                     KeyCode::Up => self.previous_area(),
                     KeyCode::Right => self.next_tab(),
                     KeyCode::Left => self.previous_tab(),
-                    KeyCode::Esc => self.quit(),
+                    KeyCode::Esc => {
+                        if self.moving {
+                            self.moving = false;
+                            println!("movement made {:?}", self.moving)
+                        } else {
+                            println!("movement made {:?}", self.moving);
+                            //self.quit()
+                        }
+                    }
+
                     _ => {}
                 },
 
@@ -114,7 +130,14 @@ impl App {
                     }
                     KeyCode::Down => self.next_area(),
                     KeyCode::Up => self.previous_area(),
-                    KeyCode::Esc => self.quit(),
+                    KeyCode::Esc => {
+                        if self.moving {
+                            println!("movement made {:?}", self.moving);
+                            self.moving = false;
+                        } else {
+                            self.quit()
+                        }
+                    }
                     _ => {}
                 },
 
@@ -139,7 +162,17 @@ impl App {
                                 self.header_popup = false;
                                 return Ok(());
                             }
-                            self.quit();
+                            if self.moving {
+                                self.moving = false;
+                                return Ok(());
+                            }
+                            if self.moving {
+                                println!("movement made {:?}", self.moving);
+                                self.moving = false;
+                            } else {
+                                println!("movement made {:?}", self.moving);
+                                self.quit();
+                            }
                             return Ok(());
                         }
                         _ => {}
@@ -188,11 +221,15 @@ impl App {
     }
 
     pub fn next_area(&mut self) {
-        self.selected_area = self.selected_area.next();
+        if self.moving {
+            self.selected_area = self.selected_area.next();
+        }
     }
 
     pub fn previous_area(&mut self) {
-        self.selected_area = self.selected_area.previous();
+        if self.moving {
+            self.selected_area = self.selected_area.previous();
+        }
     }
 
     pub fn next_tab(&mut self) {

@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use crate::{app::App, areas::SelectedArea, tabs::SelectedTab};
+use crate::{app::App, areas::SelectedArea, sidebar::RequestStructs, tabs::SelectedTab};
 use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
@@ -115,6 +115,25 @@ impl App {
                 self.result_scroll = self.result_scroll.saturating_sub(1);
             }
             KeyCode::Enter => {
+                if let Some(collection) = &self.curr_collection
+                    && let Some(index) = self.curr_collection_request_list_state.selected()
+                {
+                    let new_request = RequestStructs {
+                        url: self.url_value.clone(),
+                        params: self.params.items.clone(),
+                        auth: self.auth.clone(),
+                        headers: self.headers.items.clone(),
+                        body: self.body.clone(),
+                    };
+                    match crate::json::save_request(collection.id.clone(), index, new_request) {
+                        Ok(updated) => {
+                            self.curr_collection = Some(updated);
+                        }
+                        Err(e) => {
+                            eprintln!("Failed to save request: {}", e);
+                        }
+                    }
+                }
                 self.make_request();
             }
             _ => {}
