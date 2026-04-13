@@ -124,7 +124,25 @@ impl App {
                         }
                     }
 
-                    KeyCode::Char(c) => self.url_value.push(c),
+                    KeyCode::Char('j') => {
+                        if self.moving {
+                            self.next_area()
+                        } else {
+                            self.url_value.push('k')
+                        }
+                    }
+                    KeyCode::Char('k') => {
+                        if self.moving {
+                            self.previous_area()
+                        } else {
+                            self.url_value.push('k')
+                        }
+                    }
+                    KeyCode::Char(c) => {
+                        if !self.moving {
+                            self.url_value.push(c)
+                        }
+                    }
                     KeyCode::Backspace => {
                         self.url_value.pop();
                     }
@@ -145,6 +163,11 @@ impl App {
                 SelectedArea::TabArea => {
                     // Global tab area navigation
                     match key.code {
+                        KeyCode::Char('k') => {
+                            if self.moving {
+                                self.previous_area()
+                            }
+                        }
                         KeyCode::Up => {
                             self.previous_area();
                             return Ok(());
