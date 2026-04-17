@@ -42,14 +42,14 @@ impl Widget for &mut App {
         self.render_selected_tab(selected_tab_area, buf);
 
         render_title(title_area, buf);
-        render_footer(footer_area, buf);
+        render_footer(footer_area, buf, self.moving, self.selected_area);
     }
 }
 
 impl App {
     pub fn render_tabs(&self, area: Rect, buf: &mut Buffer) {
         let titles = SelectedTab::iter().map(SelectedTab::title);
-        let highlight_style = (Color::default(), self.selected_tab.palette().c500);
+        let highlight_style = (Color::default(), tailwind::SLATE.c200);
         let selected_tab_index = self.selected_tab as usize;
         Tabs::new(titles)
             .highlight_style(highlight_style)
@@ -123,8 +123,12 @@ fn render_title(area: Rect, buf: &mut Buffer) {
     "Rquest".bold().render(area, buf);
 }
 
-fn render_footer(area: Rect, buf: &mut Buffer) {
-    Line::raw("◄ ► to change tab | Press q to quit")
-        .centered()
-        .render(area, buf);
+fn render_footer(area: Rect, buf: &mut Buffer, moving: bool, selected_area: SelectedArea) {
+    let moving_status = if moving { "ON" } else { "OFF" };
+    let area_name = selected_area.to_string();
+    let footer_text = format!(
+        "Moving: {} | Area: {} | ◄ ► to change tab | Press q to quit",
+        moving_status, area_name
+    );
+    Line::raw(footer_text).centered().render(area, buf);
 }

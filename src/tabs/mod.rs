@@ -10,7 +10,7 @@ pub use auth::{Auth, SelectedAuthFeild};
 pub use headers::{Header, HeadersList, SelectedHeaderFeild};
 pub use params::{Param, ParamsList, SelectedParamFeild};
 use ratatui::{
-    style::{Stylize, palette::tailwind},
+    style::{palette::tailwind, Stylize},
     text::Line,
     widgets::{Block, BorderType, Padding},
 };
@@ -35,7 +35,7 @@ impl SelectedTab {
     pub fn title(self) -> Line<'static> {
         format!("  {self}  ")
             .fg(tailwind::SLATE.c200)
-            .bg(self.palette().c900)
+            .bg(tailwind::GREEN.c400)
             .into()
     }
     /// A block surrounding the tab's content
@@ -50,15 +50,6 @@ impl SelectedTab {
             .border_type(BorderType::Rounded)
             .padding(Padding::horizontal(1))
             .fg(highlight_color)
-            .border_style(self.palette().c700)
-    }
-    pub const fn palette(self) -> tailwind::Palette {
-        match self {
-            Self::Body => tailwind::BLUE,
-            Self::Headers => tailwind::EMERALD,
-            Self::Auth => tailwind::INDIGO,
-            Self::Params => tailwind::RED,
-            Self::Result => tailwind::PURPLE,
-        }
+            .border_style(tailwind::RED.c500)
     }
 }

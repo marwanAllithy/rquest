@@ -100,9 +100,13 @@ impl App {
                             self.next_area()
                         }
                     }
-                    KeyCode::Up => self.previous_area(),
+                    //KeyCode::Up => self.previous_area(),
+
+                    KeyCode::Char('l') => self.next_tab(),
+                    KeyCode::Char('h') => self.previous_tab(),
                     KeyCode::Right => self.next_tab(),
                     KeyCode::Left => self.previous_tab(),
+
                     KeyCode::Esc => {
                         if self.moving {
                             self.moving = false;
