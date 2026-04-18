@@ -3,11 +3,15 @@ use ratatui::{
     buffer::Buffer,
     crossterm::event::KeyCode,
     layout::{Alignment, Constraint, Layout, Rect},
-    style::{Color, Stylize, palette::tailwind},
+    style::{Color, Stylize},
     widgets::{Block, Clear, Paragraph, Row, Table, TableState, Widget},
 };
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumIter, FromRepr};
+
+const WHITE: Color = Color::White;
+const BLACK: Color = Color::Black;
+const GRAY: Color = Color::Gray;
 
 #[derive(Default, Clone, Debug)]
 pub struct HeadersList {
@@ -41,19 +45,20 @@ impl SelectedTab {
         selected_header_feild: SelectedHeaderFeild,
         key_value: String,
         value_value: String,
+        full_area: Rect,
     ) {
-        let padding_block = Block::bordered().padding(ratatui::widgets::Padding::uniform(1));
+        let padding_block = Block::bordered().padding(ratatui::widgets::Padding::uniform(1)).fg(WHITE);
 
         let padded_area = padding_block.inner(area);
         padding_block.render(area, buf);
         if show_popup {
-            // Calculate centered popup area inline
+            // Calculate centered popup area based on full_area
             let popup_layout = Layout::vertical([
                 Constraint::Percentage(35),
                 Constraint::Percentage(30),
                 Constraint::Percentage(35),
             ])
-            .split(padded_area);
+            .split(full_area);
 
             let popup_area = Layout::horizontal([
                 Constraint::Percentage(25),
@@ -68,8 +73,8 @@ impl SelectedTab {
             // Create the popup
             let popup_block = Block::bordered()
                 .title(" Add Header ")
-                .border_type(ratatui::widgets::BorderType::Rounded)
-                .border_style(Color::Green);
+                .border_type(ratatui::widgets::BorderType::Plain)
+                .border_style(WHITE);
 
             let inner = popup_block.inner(popup_area);
             popup_block.render(popup_area, buf);
@@ -84,28 +89,29 @@ impl SelectedTab {
 
             // Highlighting
             let key_feild_highlight = if SelectedHeaderFeild::Key == selected_header_feild {
-                tailwind::GRAY.c400
+                GRAY
             } else {
-                tailwind::GRAY.c200
+                BLACK
             };
 
             let value_feild_highlight = if SelectedHeaderFeild::Value == selected_header_feild {
-                tailwind::GRAY.c400
+                GRAY
             } else {
-                tailwind::GRAY.c200
+                BLACK
             };
 
             // Render form fields
             Paragraph::new(key_value)
-                .block(Block::bordered().fg(key_feild_highlight).title(" Key "))
+                .block(Block::bordered().fg(key_feild_highlight).title(" Key ").border_type(ratatui::widgets::BorderType::Plain))
                 .render(key_area, buf);
 
             Paragraph::new(value_value)
-                .block(Block::bordered().fg(value_feild_highlight).title(" Value "))
+                .block(Block::bordered().fg(value_feild_highlight).title(" Value ").border_type(ratatui::widgets::BorderType::Plain))
                 .render(value_area, buf);
 
             Paragraph::new("[Tab] Switch [Enter] Save  [ESC] Cancel ")
                 .alignment(Alignment::Center)
+                .fg(WHITE)
                 .render(buttons_area, buf);
         }
 
@@ -129,9 +135,9 @@ impl SelectedTab {
             .column_spacing(1)
             .header(Row::new(vec!["Active", "Header", "Value"]).top_margin(1))
             .block(Block::new().title("Headers"))
-            .row_highlight_style(Color::Green)
-            .column_highlight_style(Color::Green)
-            .cell_highlight_style(Color::Green)
+            .row_highlight_style(GRAY)
+            .column_highlight_style(GRAY)
+            .cell_highlight_style(GRAY)
             .highlight_spacing(ratatui::widgets::HighlightSpacing::Always)
             .highlight_symbol(">>");
 

@@ -3,11 +3,15 @@ use ratatui::{
     buffer::Buffer,
     crossterm::event::KeyCode,
     layout::{Alignment, Constraint, Layout, Rect},
-    style::{Color, Stylize, palette::tailwind},
+    style::{Color, Stylize},
     widgets::{Block, Clear, Paragraph, Row, Table, TableState, Widget},
 };
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumIter, FromRepr};
+
+const WHITE: Color = Color::White;
+const BLACK: Color = Color::Black;
+const GRAY: Color = Color::Gray;
 
 #[derive(Default, Clone, Debug)]
 pub struct ParamsList {
@@ -41,19 +45,63 @@ impl SelectedTab {
         selected_param_feild: SelectedParamFeild,
         key_value: String,
         value_value: String,
+        full_area: Rect,
+        show_delete_popup: bool,
     ) {
-        let padding_block = Block::bordered().padding(ratatui::widgets::Padding::uniform(1));
+        let padding_block = Block::bordered()
+            .padding(ratatui::widgets::Padding::uniform(1))
+            .fg(WHITE);
 
         let padded_area = padding_block.inner(area);
         padding_block.render(area, buf);
-        if show_popup {
-            // Calculate centered popup area inline
+
+        if show_delete_popup {
             let popup_layout = Layout::vertical([
                 Constraint::Percentage(35),
                 Constraint::Percentage(30),
                 Constraint::Percentage(35),
             ])
-            .split(padded_area);
+            .split(full_area);
+
+            let popup_area = Layout::horizontal([
+                Constraint::Percentage(25),
+                Constraint::Percentage(50),
+                Constraint::Percentage(25),
+            ])
+            .split(popup_layout[1])[1];
+
+            Clear.render(popup_area, buf);
+
+            let popup_block = Block::bordered()
+                .title(" Delete Parameter ")
+                .border_type(ratatui::widgets::BorderType::Plain)
+                .border_style(WHITE);
+
+            let inner = popup_block.inner(popup_area);
+            popup_block.render(popup_area, buf);
+
+            let [message_area, buttons_area] =
+                Layout::vertical([Constraint::Length(3), Constraint::Min(1)]).areas(inner);
+
+            Paragraph::new("Delete this parameter?")
+                .alignment(Alignment::Center)
+                .fg(WHITE)
+                .render(message_area, buf);
+
+            Paragraph::new(" [Enter] Yes  [Esc] No ")
+                .alignment(Alignment::Center)
+                .fg(WHITE)
+                .render(buttons_area, buf);
+        }
+
+        if show_popup {
+            // Calculate centered popup area based on full_area
+            let popup_layout = Layout::vertical([
+                Constraint::Percentage(35),
+                Constraint::Percentage(30),
+                Constraint::Percentage(35),
+            ])
+            .split(full_area);
 
             let popup_area = Layout::horizontal([
                 Constraint::Percentage(25),
@@ -68,8 +116,8 @@ impl SelectedTab {
             // Create the popup
             let popup_block = Block::bordered()
                 .title(" Add Parameter ")
-                .border_type(ratatui::widgets::BorderType::Rounded)
-                .border_style(Color::Green);
+                .border_type(ratatui::widgets::BorderType::Plain)
+                .border_style(WHITE);
 
             let inner = popup_block.inner(popup_area);
             popup_block.render(popup_area, buf);
@@ -84,28 +132,39 @@ impl SelectedTab {
 
             // Highlighting
             let key_feild_highlight = if SelectedParamFeild::Key == selected_param_feild {
-                tailwind::GRAY.c400
+                GRAY
             } else {
-                tailwind::GRAY.c200
+                BLACK
             };
 
             let value_feild_highlight = if SelectedParamFeild::Value == selected_param_feild {
-                tailwind::GRAY.c400
+                GRAY
             } else {
-                tailwind::GRAY.c200
+                BLACK
             };
 
             // Render form fields
             Paragraph::new(key_value)
-                .block(Block::bordered().fg(key_feild_highlight).title(" Key "))
+                .block(
+                    Block::bordered()
+                        .fg(key_feild_highlight)
+                        .title(" Key ")
+                        .border_type(ratatui::widgets::BorderType::Plain),
+                )
                 .render(key_area, buf);
 
             Paragraph::new(value_value)
-                .block(Block::bordered().fg(value_feild_highlight).title(" Value "))
+                .block(
+                    Block::bordered()
+                        .fg(value_feild_highlight)
+                        .title(" Value ")
+                        .border_type(ratatui::widgets::BorderType::Plain),
+                )
                 .render(value_area, buf);
 
             Paragraph::new("[Tab] Switch [Enter] Save  [ESC] Cancel ")
                 .alignment(Alignment::Center)
+                .fg(WHITE)
                 .render(buttons_area, buf);
         }
 
@@ -129,9 +188,9 @@ impl SelectedTab {
             .column_spacing(1)
             .header(Row::new(vec!["Active", "Param", "Value"]).top_margin(1))
             .block(Block::new().title("Params"))
-            .row_highlight_style(Color::Green)
-            .column_highlight_style(Color::Green)
-            .cell_highlight_style(Color::Green)
+            .row_highlight_style(GRAY)
+            .column_highlight_style(GRAY)
+            .cell_highlight_style(GRAY)
             .highlight_spacing(ratatui::widgets::HighlightSpacing::Always)
             .highlight_symbol(">>");
 
@@ -147,6 +206,7 @@ impl App {
                     self.param_popup = true;
                 }
             }
+
             KeyCode::Tab if self.param_popup => {
                 if !self.moving {
                     self.seleted_param_feild =
@@ -158,8 +218,38 @@ impl App {
                 }
             }
 
-            KeyCode::Char('j') if !self.param_popup => self.next_param_row(),
-            KeyCode::Char('k') if !self.param_popup => self.previous_param_row(),
+            KeyCode::Char('j') if !self.param_popup && !self.param_delete_popup && !self.moving => {
+                self.next_param_row()
+            }
+
+            KeyCode::Char('k') if !self.param_popup && !self.param_delete_popup && !self.moving => {
+                self.previous_param_row()
+            }
+
+            KeyCode::Char('d') if !self.param_popup && !self.param_delete_popup && !self.moving => {
+                if self.params.state.selected().is_some() {
+                    self.param_delete_popup = true;
+                }
+            }
+            KeyCode::Esc => {
+                if self.param_delete_popup {
+                    self.param_delete_popup = false;
+                } else if self.param_popup {
+                    self.param_popup = false;
+                }
+                self.moving = !self.moving;
+            }
+            KeyCode::Enter if self.param_delete_popup => {
+                if let Some(index) = self.params.state.selected() {
+                    self.params.items.remove(index);
+                    if self.params.items.is_empty() {
+                        self.params.state.select(None);
+                    } else if index >= self.params.items.len() {
+                        self.params.state.select(Some(self.params.items.len() - 1));
+                    }
+                }
+                self.param_delete_popup = false;
+            }
             KeyCode::Char(c) if self.param_popup => {
                 if !self.moving {
                     if self.seleted_param_feild == SelectedParamFeild::Key {

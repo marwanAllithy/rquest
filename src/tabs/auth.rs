@@ -3,11 +3,15 @@ use ratatui::{
     buffer::Buffer,
     crossterm::event::KeyCode,
     layout::{Constraint::Length, Layout, Rect},
-    style::{palette::tailwind, Stylize},
+    style::{Color, Stylize},
     widgets::{Block, Paragraph, Widget},
 };
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumIter, FromRepr};
+
+const WHITE: Color = Color::White;
+const BLACK: Color = Color::Black;
+const GRAY: Color = Color::Gray;
 
 #[derive(Deserialize, Serialize, Default, Debug, Clone)]
 pub struct Auth {
@@ -33,7 +37,7 @@ impl SelectedTab {
         holder_value: String,
         value_value: String,
     ) {
-        let padding_block = Block::bordered().padding(ratatui::widgets::Padding::uniform(1));
+        let padding_block = Block::bordered().padding(ratatui::widgets::Padding::uniform(1)).fg(WHITE);
 
         let padded_area = padding_block.inner(area);
         padding_block.render(area, buf);
@@ -43,23 +47,23 @@ impl SelectedTab {
 
         // Highlighting
         let holder_highlight = if SelectedAuthFeild::Holder == selected_auth_feild {
-            tailwind::GRAY.c400
+            GRAY
         } else {
-            tailwind::GRAY.c200
+            BLACK
         };
 
         let value_highlight = if SelectedAuthFeild::Value == selected_auth_feild {
-            tailwind::GRAY.c400
+            GRAY
         } else {
-            tailwind::GRAY.c200
+            BLACK
         };
 
         Paragraph::new(holder_value)
-            .block(Block::bordered().title(" Holder ").fg(holder_highlight))
+            .block(Block::bordered().title(" Holder ").fg(holder_highlight).border_type(ratatui::widgets::BorderType::Plain))
             .render(holder_area, buf);
 
         Paragraph::new(value_value)
-            .block(Block::bordered().title(" value ").fg(value_highlight))
+            .block(Block::bordered().title(" value ").fg(value_highlight).border_type(ratatui::widgets::BorderType::Plain))
             .render(value_area, buf);
     }
 }

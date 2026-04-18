@@ -25,10 +25,9 @@ pub struct App {
     // nav
     pub moving: bool,
 
-    //pub history: Option<ListState>,
-
     // Params
     pub param_popup: bool,
+    pub param_delete_popup: bool,
     pub seleted_param_feild: SelectedParamFeild,
     pub params: ParamsList,
     pub param_key_value: String,
@@ -84,6 +83,11 @@ impl App {
         if let Event::Key(key) = event::read()?
             && key.kind == KeyEventKind::Press
         {
+            if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
+                self.quit();
+                return Ok(());
+            }
+
             match self.selected_area {
                 // Sidebar
                 SelectedArea::Sidebar => self.handle_sidebar_area(key.code),
@@ -95,25 +99,19 @@ impl App {
                     KeyCode::Char('3') => self.selected_tab = SelectedTab::Auth,
                     KeyCode::Char('4') => self.selected_tab = SelectedTab::Body,
                     KeyCode::Char('5') => self.selected_tab = SelectedTab::Result,
-                    KeyCode::Down => {
-                        if self.moving {
-                            self.next_area()
-                        }
-                    }
-                    //KeyCode::Up => self.previous_area(),
 
                     KeyCode::Char('l') => self.next_tab(),
                     KeyCode::Char('h') => self.previous_tab(),
                     KeyCode::Right => self.next_tab(),
                     KeyCode::Left => self.previous_tab(),
+                    KeyCode::Down => self.selected_area = SelectedArea::Url,
+                    KeyCode::Char('j') => self.selected_area = SelectedArea::Url,
 
                     KeyCode::Esc => {
+                        self.unload_request();
                         if self.moving {
                             self.moving = false;
                             println!("movement made {:?}", self.moving)
-                        } else {
-                            println!("movement made {:?}", self.moving);
-                            //self.quit()
                         }
                     }
 
@@ -128,6 +126,19 @@ impl App {
                         }
                     }
 
+                    KeyCode::Enter => {
+                        if self.moving {
+                            self.moving = false;
+                        }
+                    }
+
+                    KeyCode::Esc => {
+                        if !self.moving {
+                            self.moving = true;
+                            println!("movement made {:?}", self.moving)
+                        }
+                    }
+
                     KeyCode::Char('j') => {
                         if self.moving {
                             self.next_area()
@@ -135,6 +146,7 @@ impl App {
                             self.url_value.push('k')
                         }
                     }
+
                     KeyCode::Char('k') => {
                         if self.moving {
                             self.previous_area()
@@ -142,24 +154,19 @@ impl App {
                             self.url_value.push('k')
                         }
                     }
+
                     KeyCode::Char(c) => {
                         if !self.moving {
                             self.url_value.push(c)
                         }
                     }
+
                     KeyCode::Backspace => {
                         self.url_value.pop();
                     }
+
                     KeyCode::Down => self.next_area(),
                     KeyCode::Up => self.previous_area(),
-                    KeyCode::Esc => {
-                        if self.moving {
-                            println!("movement made {:?}", self.moving);
-                            self.moving = false;
-                        } else {
-                            self.quit()
-                        }
-                    }
                     _ => {}
                 },
 
@@ -174,32 +181,6 @@ impl App {
                         }
                         KeyCode::Up => {
                             self.previous_area();
-                            return Ok(());
-                        }
-                        KeyCode::Esc => {
-                            if self.collection_popup {
-                                self.param_popup = false;
-                                return Ok(());
-                            }
-                            if self.param_popup {
-                                self.param_popup = false;
-                                return Ok(());
-                            }
-                            if self.header_popup {
-                                self.header_popup = false;
-                                return Ok(());
-                            }
-                            if self.moving {
-                                self.moving = false;
-                                return Ok(());
-                            }
-                            if self.moving {
-                                println!("movement made {:?}", self.moving);
-                                self.moving = false;
-                            } else {
-                                println!("movement made {:?}", self.moving);
-                                self.quit();
-                            }
                             return Ok(());
                         }
                         _ => {}

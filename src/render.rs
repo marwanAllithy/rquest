@@ -4,10 +4,14 @@ use ratatui::{
         Constraint::{Length, Min, Percentage},
         Layout, Rect,
     },
-    style::{palette::tailwind, Color, Stylize},
+    style::{Color, Stylize},
     text::Line,
     widgets::{Block, BorderType, Paragraph, Tabs, Widget},
 };
+
+const WHITE: Color = Color::White;
+const BLACK: Color = Color::Black;
+const GRAY: Color = Color::Gray;
 use strum::IntoEnumIterator;
 
 use crate::{app::App, areas::SelectedArea, tabs::SelectedTab};
@@ -36,10 +40,11 @@ impl Widget for &mut App {
             self.collection_popup,
             self.selected_area,
             sidebar_area,
+            area,
             buf,
         );
         self.render_tabs(tabs_area, buf);
-        self.render_selected_tab(selected_tab_area, buf);
+        self.render_selected_tab(selected_tab_area, inner_area, buf);
 
         render_title(title_area, buf);
         render_footer(footer_area, buf, self.moving, self.selected_area);
@@ -49,9 +54,10 @@ impl Widget for &mut App {
 impl App {
     pub fn render_tabs(&self, area: Rect, buf: &mut Buffer) {
         let titles = SelectedTab::iter().map(SelectedTab::title);
-        let highlight_style = (Color::default(), tailwind::SLATE.c200);
+        let highlight_style = (BLACK, GRAY);
         let selected_tab_index = self.selected_tab as usize;
         Tabs::new(titles)
+            .style(WHITE)
             .highlight_style(highlight_style)
             .select(selected_tab_index)
             .padding("", "")
@@ -59,7 +65,7 @@ impl App {
             .render(area, buf);
     }
 
-    pub fn render_selected_tab(&mut self, area: Rect, buf: &mut Buffer) {
+    pub fn render_selected_tab(&mut self, area: Rect, full_area: Rect, buf: &mut Buffer) {
         match self.selected_tab {
             SelectedTab::Params => self.selected_tab.render_params(
                 &mut self.params,
@@ -69,6 +75,8 @@ impl App {
                 self.seleted_param_feild,
                 self.param_key_value.clone(),
                 self.param_value_value.clone(),
+                full_area,
+                self.param_delete_popup,
             ),
             SelectedTab::Headers => self.selected_tab.render_headers(
                 &mut self.headers,
@@ -78,6 +86,7 @@ impl App {
                 self.selected_header_feild,
                 self.header_key_value.clone(),
                 self.header_value_value.clone(),
+                full_area,
             ),
             SelectedTab::Auth => self.selected_tab.render_auth(
                 area,
@@ -103,9 +112,9 @@ impl App {
 
     pub fn render_url(&self, area: Rect, buf: &mut Buffer) {
         let highlight_color = if SelectedArea::Url == self.selected_area {
-            tailwind::GREEN.c200
+            GRAY
         } else {
-            tailwind::GREEN.c700
+            BLACK
         };
 
         Paragraph::new(self.url_value.clone().as_str())
@@ -113,22 +122,22 @@ impl App {
                 Block::bordered()
                     .title(" URL ")
                     .fg(highlight_color)
-                    .border_type(BorderType::Rounded),
+                    .border_type(BorderType::Plain),
             )
             .render(area, buf);
     }
 }
 
 fn render_title(area: Rect, buf: &mut Buffer) {
-    "Rquest".bold().render(area, buf);
+    "Rquest".bold().fg(WHITE).render(area, buf);
 }
 
 fn render_footer(area: Rect, buf: &mut Buffer, moving: bool, selected_area: SelectedArea) {
     let moving_status = if moving { "ON" } else { "OFF" };
     let area_name = selected_area.to_string();
     let footer_text = format!(
-        "Moving: {} | Area: {} | ◄ ► to change tab | Press q to quit",
+        "Moving: {} | Area: {} | ◄ ► to change tab | C-c to quit",
         moving_status, area_name
     );
-    Line::raw(footer_text).centered().render(area, buf);
+    Line::raw(footer_text). fg(WHITE).centered().render(area, buf);
 }

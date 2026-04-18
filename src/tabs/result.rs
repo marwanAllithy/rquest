@@ -5,9 +5,13 @@ use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
+    style::Color,
     text::Text,
     widgets::{Paragraph, Widget, Wrap},
 };
+
+const WHITE: Color = Color::White;
+
 impl SelectedTab {
     pub fn render_result(
         self,
@@ -24,6 +28,7 @@ impl SelectedTab {
         };
 
         Paragraph::new(Text::from(content))
+            .style(WHITE)
             .block(self.block(selected_area))
             .wrap(Wrap { trim: false })
             .scroll((scroll, 0))

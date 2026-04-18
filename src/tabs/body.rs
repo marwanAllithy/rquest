@@ -3,9 +3,12 @@ use ratatui::{
     buffer::Buffer,
     crossterm::event::KeyCode,
     layout::Rect,
+    style::Color,
     widgets::{Paragraph, Widget},
 };
 use std::{env, fs, process::Command};
+
+const WHITE: Color = Color::White;
 
 impl SelectedTab {
     pub fn render_body(
@@ -23,6 +26,7 @@ impl SelectedTab {
         };
 
         Paragraph::new(content)
+            .style(WHITE)
             .block(self.block(selected_area))
             .render(area, buf);
     }

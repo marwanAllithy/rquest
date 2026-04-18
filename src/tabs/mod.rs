@@ -10,11 +10,15 @@ pub use auth::{Auth, SelectedAuthFeild};
 pub use headers::{Header, HeadersList, SelectedHeaderFeild};
 pub use params::{Param, ParamsList, SelectedParamFeild};
 use ratatui::{
-    style::{palette::tailwind, Stylize},
+    style::{Color, Stylize},
     text::Line,
     widgets::{Block, BorderType, Padding},
 };
 use strum::{Display, EnumIter, FromRepr};
+
+const WHITE: Color = Color::White;
+const BLACK: Color = Color::Black;
+const GRAY: Color = Color::Gray;
 
 #[derive(Default, Clone, Copy, Display, FromRepr, EnumIter)]
 pub enum SelectedTab {
@@ -34,22 +38,20 @@ pub enum SelectedTab {
 impl SelectedTab {
     pub fn title(self) -> Line<'static> {
         format!("  {self}  ")
-            .fg(tailwind::SLATE.c200)
-            .bg(tailwind::GREEN.c400)
+            .fg(WHITE)
             .into()
     }
     /// A block surrounding the tab's content
     pub fn block(self, selected_area: SelectedArea) -> Block<'static> {
         let highlight_color = if SelectedArea::TabArea == selected_area {
-            tailwind::GREEN.c200
+            GRAY
         } else {
-            tailwind::GREEN.c700
+            BLACK
         };
 
         Block::bordered()
-            .border_type(BorderType::Rounded)
+            .border_type(BorderType::Plain)
             .padding(Padding::horizontal(1))
             .fg(highlight_color)
-            .border_style(tailwind::RED.c500)
     }
 }
