@@ -109,6 +109,23 @@ pub fn add_collection(new_collection: Collection) -> std::io::Result<()> {
     Ok(())
 }
 
+pub fn del_collection(collection_id: String) -> std::io::Result<()> {
+    let path = get_data_path();
+    init_data_file()?;
+
+    let data = fs::read_to_string(&path)?;
+    let mut collections: Vec<Collection> = serde_json::from_str(&data)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
+
+    // Find and remove the collection
+    collections.retain(|c| c.id != collection_id);
+
+    let json = serde_json::to_string_pretty(&collections)?;
+    fs::write(path, json)?;
+
+    Ok(())
+}
+
 pub fn del_request(collection_id: String, index: usize) -> std::io::Result<()> {
     let path = get_data_path();
     init_data_file()?;

@@ -38,6 +38,7 @@ impl Widget for &mut App {
         self.render_sidebar(
             self.new_collection_name_value.clone(),
             self.collection_popup,
+            self.collection_delete_popup,
             self.selected_area,
             sidebar_area,
             area,
@@ -48,27 +49,27 @@ impl Widget for &mut App {
 
         if self.help_popup {
             let popup_layout = Layout::vertical([
-                Constraint::Percentage(20),
-                Constraint::Percentage(60),
-                Constraint::Percentage(20),
+                Constraint::Percentage(30),
+                Constraint::Percentage(40),
+                Constraint::Percentage(30),
             ])
             .split(area);
 
             let popup_area = Layout::horizontal([
-                Constraint::Percentage(10),
-                Constraint::Percentage(80),
-                Constraint::Percentage(10),
+                Constraint::Percentage(30),
+                Constraint::Percentage(40),
+                Constraint::Percentage(30),
             ])
             .split(popup_layout[1])[1];
 
             Clear.render(popup_area, buf);
 
             let categories = get_help_categories();
-            let mid = (categories.len() + 1) / 2;
+            let mid = categories.len().div_ceil(2);
             let left_categories = &categories[..mid];
             let right_categories = &categories[mid..];
 
-let _block = Block::bordered()
+            let _block = Block::bordered()
                 .title(" Help ")
                 .border_type(BorderType::Plain)
                 .border_style(WHITE)
@@ -76,8 +77,9 @@ let _block = Block::bordered()
 
             let inner = _block.inner(popup_area);
             _block.render(popup_area, buf);
-            let [left_inner, right_inner] = Layout::horizontal([Constraint::Percentage(50), Constraint::Percentage(50)])
-                .areas(inner);
+            let [left_inner, right_inner] =
+                Layout::horizontal([Constraint::Percentage(50), Constraint::Percentage(50)])
+                    .areas(inner);
 
             let mut left_content = String::new();
             for category in left_categories {

@@ -59,12 +59,16 @@ pub struct App {
     pub result: String,
     pub result_scroll: u16,
 
+    // Current request
+    pub current_request_id: Option<String>,
+
     // Collections
     pub collections_list_state: ListState,
     pub collections: Vec<Collection>,
     pub curr_collection: Option<Collection>,
     pub curr_collection_request_list_state: ListState,
     pub collection_popup: bool,
+    pub collection_delete_popup: bool,
     pub new_collection_name_value: String,
 
     // Help

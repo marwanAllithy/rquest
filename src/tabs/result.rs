@@ -141,6 +141,8 @@ impl App {
                     && let Some(index) = self.curr_collection_request_list_state.selected()
                 {
                     let new_request = RequestStructs {
+                        id: self.current_request_id.clone().unwrap_or_else(|| uuid::Uuid::new_v4().to_string()),
+                        name: "request".to_string(),
                         url: self.url_textarea.lines().join(""),
                         params: self.params.items.clone(),
                         auth: self.auth.clone(),
@@ -155,6 +157,8 @@ impl App {
                     && let Some(index) = self.curr_collection_request_list_state.selected()
                 {
                     let new_request = RequestStructs {
+                        id: self.current_request_id.clone().unwrap_or_else(|| uuid::Uuid::new_v4().to_string()),
+                        name: "request".to_string(),
                         url: self.url_textarea.lines().join(""),
                         params: self.params.items.clone(),
                         auth: self.auth.clone(),

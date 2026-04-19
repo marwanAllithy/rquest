@@ -2,13 +2,12 @@ use crate::{
     app::App,
     areas::SelectedArea,
     json::{
-        add_collection, add_request, del_request, fetch_collection, fetch_collection_by_index,
-        fetch_collections,
+        add_collection, add_request, del_collection, del_request, fetch_collection,
+        fetch_collection_by_index, fetch_collections,
     },
     tabs::{Auth, Header, Param, SelectedTab},
 };
 use crossterm::event::KeyCode;
-use ratatui_textarea::TextArea;
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Layout, Rect},
@@ -16,6 +15,7 @@ use ratatui::{
     text::ToSpan,
     widgets::{Block, BorderType, Borders, Clear, List, Padding, Paragraph, Widget},
 };
+use ratatui_textarea::TextArea;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -37,6 +37,8 @@ pub struct Collection {
 
 #[derive(Deserialize, Serialize, Debug, Default, Clone)]
 pub struct RequestStructs {
+    pub id: String,
+    pub name: String,
     pub url: String,
     pub params: Vec<Param>,
     pub auth: Auth,
@@ -51,6 +53,7 @@ impl App {
         &mut self,
         title_value: String,
         show_popup: bool,
+        show_delete_popup: bool,
         selected_area: SelectedArea,
         area: Rect,
         full_area: Rect,
@@ -105,6 +108,46 @@ impl App {
                 .fg(WHITE)
                 .render(buttons_area, buf);
         }
+
+        if show_delete_popup {
+            let popup_layout = Layout::vertical([
+                Constraint::Percentage(35),
+                Constraint::Percentage(30),
+                Constraint::Percentage(35),
+            ])
+            .split(full_area);
+
+            let popup_area = Layout::horizontal([
+                Constraint::Percentage(25),
+                Constraint::Percentage(50),
+                Constraint::Percentage(25),
+            ])
+            .split(popup_layout[1])[1];
+
+            Clear.render(popup_area, buf);
+
+            let popup_block = Block::bordered()
+                .title(" Delete ")
+                .border_type(ratatui::widgets::BorderType::Plain)
+                .border_style(WHITE);
+
+            let inner = popup_block.inner(popup_area);
+            popup_block.render(popup_area, buf);
+
+            let [message_area, buttons_area] =
+                Layout::vertical([Constraint::Length(3), Constraint::Min(1)]).areas(inner);
+
+            Paragraph::new("Delete this collection?")
+                .alignment(Alignment::Center)
+                .fg(WHITE)
+                .render(message_area, buf);
+
+            Paragraph::new(" [Enter] Yes  [ESC] No ")
+                .alignment(Alignment::Center)
+                .fg(WHITE)
+                .render(buttons_area, buf);
+        }
+
         if let Some(collection) = &self.curr_collection {
             // when collection is selected
             let highlight_color = if SelectedArea::Sidebar == selected_area {
@@ -114,7 +157,7 @@ impl App {
             };
 
             let curr_collection_requests_list =
-                List::new(collection.requests.iter().map(|x| x.url.to_span()))
+                List::new(collection.requests.iter().map(|x| x.name.to_span()))
                     .block(
                         Block::default()
                             .border_type(BorderType::Plain)
@@ -183,8 +226,12 @@ impl App {
     pub fn handle_sidebar_area(&mut self, key: KeyCode) {
         match key {
             KeyCode::Char('a') if !self.collection_popup => {
+                let id = Uuid::new_v4();
+
                 if let Some(collection) = &self.curr_collection {
                     let new_request = RequestStructs {
+                        id: id.to_string(),
+                        name: "request".to_string(),
                         url: "https://example.com/".to_string(),
                         params: Vec::new(),
                         auth: Auth::default(),
@@ -210,19 +257,19 @@ impl App {
                 }
             }
 
-            KeyCode::Char('d') if !self.collection_popup => {
+            KeyCode::Char('d') if !self.collection_popup && !self.collection_delete_popup => {
+                self.collection_delete_popup = true;
+            }
+
+            KeyCode::Enter if self.collection_delete_popup => {
                 if let Some(collection) = &self.curr_collection
                     && let Some(index) = self.curr_collection_request_list_state.selected()
                 {
-                    // Deleted a request from collection
-
+                    // Delete request from collection
                     match del_request(collection.id.clone(), index) {
                         Ok(_) => {
-                            // Refresh the current collection
                             if let Ok(updated) = fetch_collection(collection.id.clone()) {
                                 self.curr_collection = Some(updated.clone());
-
-                                // Fix the selection
                                 if updated.requests.is_empty() {
                                     self.curr_collection_request_list_state.select(None);
                                 } else if index >= updated.requests.len() {
@@ -232,13 +279,34 @@ impl App {
                                     self.curr_collection_request_list_state.select(Some(index));
                                 }
                             }
-                            eprintln!("Successfully deleted request");
                         }
                         Err(e) => {
                             eprintln!("Failed to delete request: {}", e);
                         }
                     }
+                } else if let Some(index) = self.collections_list_state.selected() {
+                    let collections = fetch_collections().unwrap_or_default();
+                    if let Some(col) = collections.get(index) {
+                        match del_collection(col.id.clone()) {
+                            Ok(_) => {
+                                let updated = fetch_collections().unwrap_or_default();
+                                self.curr_collection = None;
+                                self.curr_collection_request_list_state.select(None);
+                                if !updated.is_empty() && index < updated.len() {
+                                    self.collections_list_state.select(Some(index));
+                                } else if !updated.is_empty() {
+                                    self.collections_list_state.select(Some(updated.len() - 1));
+                                } else {
+                                    self.collections_list_state.select(None);
+                                }
+                            }
+                            Err(e) => {
+                                eprintln!("Failed to delete collection: {}", e);
+                            }
+                        }
+                    }
                 }
+                self.collection_delete_popup = false;
             }
 
             KeyCode::Down => {
@@ -376,10 +444,17 @@ impl App {
     }
 
     pub fn load_request(&mut self, request: &RequestStructs) {
-        self.url_textarea = TextArea::from(request.url.lines().map(|s| s.to_string()).collect::<Vec<String>>());
+        self.current_request_id = Some(request.id.clone());
+        self.url_textarea = TextArea::from(
+            request
+                .name
+                .lines()
+                .map(|s| s.to_string())
+                .collect::<Vec<String>>(),
+        );
         self.params.items = request.params.clone();
         self.headers.items = request.headers.clone();
-        
+
         let body_lines: Vec<String> = request.body.lines().map(|s| s.to_string()).collect();
         self.body_textarea = TextArea::from(body_lines);
 
