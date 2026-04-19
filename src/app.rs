@@ -87,9 +87,12 @@ impl App {
         if let Event::Key(key) = event::read()?
             && key.kind == KeyEventKind::Press
         {
+            // C-c only exits app from Tabs/Sidebar, not from edit mode
             if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
-                self.quit();
-                return Ok(());
+                if self.selected_area == SelectedArea::Tabs || self.selected_area == SelectedArea::Sidebar {
+                    self.quit();
+                    return Ok(());
+                }
             }
 
             match self.selected_area {
@@ -124,6 +127,10 @@ impl App {
 
                 // URL input area
                 SelectedArea::Url => match key.code {
+                    KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                        self.moving = true;
+                    }
+
                     KeyCode::Enter => {
                         self.url_value = self.url_textarea.lines().join("");
                         if self.moving {
@@ -176,7 +183,6 @@ impl App {
                     if self.selected_tab == SelectedTab::Body {
                         if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
                             self.moving = true;
-                            self.selected_area = SelectedArea::Tabs;
                             return Ok(());
                         }
                         if !self.moving {
