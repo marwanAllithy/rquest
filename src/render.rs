@@ -1,12 +1,12 @@
 use ratatui::{
     buffer::Buffer,
     layout::{
-        Constraint::{Length, Min, Percentage},
+        Constraint::{self, Length, Min, Percentage},
         Layout, Rect,
     },
     style::{Color, Stylize},
     text::Line,
-    widgets::{Block, BorderType, Tabs, Widget},
+    widgets::{Block, BorderType, Clear, Paragraph, Tabs, Widget, Wrap},
 };
 
 const WHITE: Color = Color::White;
@@ -14,7 +14,7 @@ const BLACK: Color = Color::Black;
 const GRAY: Color = Color::Gray;
 use strum::IntoEnumIterator;
 
-use crate::{app::App, areas::SelectedArea, tabs::SelectedTab};
+use crate::{app::App, areas::SelectedArea, tabs::get_help_categories, tabs::SelectedTab};
 
 impl Widget for &mut App {
     fn render(self, area: Rect, buf: &mut Buffer) {
@@ -45,6 +45,64 @@ impl Widget for &mut App {
         );
         self.render_tabs(tabs_area, buf);
         self.render_selected_tab(selected_tab_area, inner_area, buf);
+
+        if self.help_popup {
+            let popup_layout = Layout::vertical([
+                Constraint::Percentage(20),
+                Constraint::Percentage(60),
+                Constraint::Percentage(20),
+            ])
+            .split(area);
+
+            let popup_area = Layout::horizontal([
+                Constraint::Percentage(10),
+                Constraint::Percentage(80),
+                Constraint::Percentage(10),
+            ])
+            .split(popup_layout[1])[1];
+
+            Clear.render(popup_area, buf);
+
+            let categories = get_help_categories();
+            let mid = (categories.len() + 1) / 2;
+            let left_categories = &categories[..mid];
+            let right_categories = &categories[mid..];
+
+let _block = Block::bordered()
+                .title(" Help ")
+                .border_type(BorderType::Plain)
+                .border_style(WHITE)
+                .fg(WHITE);
+
+            let inner = _block.inner(popup_area);
+            _block.render(popup_area, buf);
+            let [left_inner, right_inner] = Layout::horizontal([Constraint::Percentage(50), Constraint::Percentage(50)])
+                .areas(inner);
+
+            let mut left_content = String::new();
+            for category in left_categories {
+                left_content.push_str(&format!("{}:\n", category.name));
+                for bind in &category.keybinds {
+                    left_content.push_str(&format!("  {}\n", bind));
+                }
+            }
+            Paragraph::new(left_content.trim())
+                .style(WHITE)
+                .wrap(Wrap { trim: false })
+                .render(left_inner, buf);
+
+            let mut right_content = String::new();
+            for category in right_categories {
+                right_content.push_str(&format!("{}:\n", category.name));
+                for bind in &category.keybinds {
+                    right_content.push_str(&format!("  {}\n", bind));
+                }
+            }
+            Paragraph::new(right_content.trim())
+                .style(WHITE)
+                .wrap(Wrap { trim: false })
+                .render(right_inner, buf);
+        }
 
         render_title(title_area, buf);
         render_footer(footer_area, buf, self.moving, self.selected_area);
@@ -139,5 +197,8 @@ fn render_footer(area: Rect, buf: &mut Buffer, _moving: bool, selected_area: Sel
         "Area: {} | j/k to navigate | C-c to exit edit mode",
         area_name
     );
-    Line::raw(footer_text). fg(WHITE).centered().render(area, buf);
+    Line::raw(footer_text)
+        .fg(WHITE)
+        .centered()
+        .render(area, buf);
 }

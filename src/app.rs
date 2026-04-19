@@ -66,6 +66,9 @@ pub struct App {
     pub curr_collection_request_list_state: ListState,
     pub collection_popup: bool,
     pub new_collection_name_value: String,
+
+    // Help
+    pub help_popup: bool,
 }
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub enum AppState {
@@ -87,12 +90,25 @@ impl App {
         if let Event::Key(key) = event::read()?
             && key.kind == KeyEventKind::Press
         {
-            // C-c only exits app from Tabs/Sidebar, not from edit mode
+            // C-c only quits the app
             if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
-                if self.selected_area == SelectedArea::Tabs || self.selected_area == SelectedArea::Sidebar {
-                    self.quit();
-                    return Ok(());
-                }
+                self.quit();
+                return Ok(());
+            }
+
+            // Help popup is global - close with Esc or toggle with ?
+            if key.code == KeyCode::Char('?') {
+                self.help_popup = !self.help_popup;
+                return Ok(());
+            }
+            if key.code == KeyCode::Esc && self.help_popup {
+                self.help_popup = false;
+                return Ok(());
+            }
+
+            // Don't process other keys while help popup is open
+            if self.help_popup {
+                return Ok(());
             }
 
             match self.selected_area {
@@ -127,20 +143,10 @@ impl App {
 
                 // URL input area
                 SelectedArea::Url => match key.code {
-                    KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                        self.moving = true;
-                    }
-
                     KeyCode::Enter => {
                         self.url_value = self.url_textarea.lines().join("");
                         if self.moving {
                             self.moving = false;
-                        }
-                    }
-
-                    KeyCode::Esc => {
-                        if !self.moving {
-                            self.moving = true;
                         }
                     }
 
@@ -173,19 +179,17 @@ impl App {
                             }
                         }
                         KeyCode::Up => {
-                            self.previous_area();
-                            return Ok(());
+                            if self.moving || self.selected_tab != SelectedTab::Body {
+                                self.previous_area();
+                                return Ok(());
+                            }
                         }
                         _ => {}
                     }
 
                     // Handle Body tab with textarea input
                     if self.selected_tab == SelectedTab::Body {
-                        if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
-                            self.moving = true;
-                            return Ok(());
-                        }
-                        if !self.moving {
+                        if !self.moving && key.code != KeyCode::Esc {
                             self.body_textarea.input(key);
                             return Ok(());
                         }
@@ -196,17 +200,25 @@ impl App {
                         SelectedTab::Params => self.handle_params_tab(key.code),
                         SelectedTab::Headers => self.handle_headers_tab(key.code),
                         SelectedTab::Auth => self.handle_auth_tab(key.code),
-                        SelectedTab::Body => self.handle_body_tab(key.code),
-                        SelectedTab::Result => self.handle_result_tab(key.code),
+                        SelectedTab::Body => self.handle_body_tab(key),
+                        SelectedTab::Result => self.handle_result_tab(key),
                     }
                 }
             }
         }
         Ok(())
     }
-    fn get_clipboard_text(&self) -> Option<String> {
+    pub fn get_clipboard_text(&self) -> Option<String> {
         if let Ok(mut clipboard) = Clipboard::new() {
             clipboard.get_text().ok()
+        } else {
+            None
+        }
+    }
+
+    pub fn set_clipboard_text(&mut self, text: String) -> Option<()> {
+        if let Ok(mut clipboard) = Clipboard::new() {
+            clipboard.set_text(text).ok()
         } else {
             None
         }

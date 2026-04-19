@@ -2,12 +2,14 @@ mod auth;
 mod binds;
 mod body;
 mod headers;
+mod help;
 mod params;
 mod result;
 
 use crate::areas::SelectedArea;
 pub use auth::{Auth, SelectedAuthFeild};
 pub use headers::{Header, HeadersList, SelectedHeaderFeild};
+pub use help::get_help_categories;
 pub use params::{Param, ParamsList, SelectedParamFeild};
 use ratatui::{
     style::{Color, Stylize},
