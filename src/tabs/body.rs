@@ -1,12 +1,11 @@
 use crate::{app::App, areas::SelectedArea, tabs::SelectedTab};
 use ratatui::{
     buffer::Buffer,
-    crossterm::event::KeyCode,
     layout::Rect,
     style::Color,
     widgets::{Paragraph, Widget},
 };
-use std::{env, fs, process::Command};
+use ratatui_textarea::TextArea;
 
 const WHITE: Color = Color::White;
 
@@ -14,47 +13,35 @@ impl SelectedTab {
     pub fn render_body(
         self,
         selected_area: SelectedArea,
-        body: &String, // Changed to referencd
+        body_textarea: &TextArea<'static>,
         area: Rect,
         buf: &mut Buffer,
     ) {
-        // Display the body content
-        let content = if body.is_empty() {
-            "Press Enter to edit body in your editor...".to_string()
-        } else {
-            format!("Body content:\n{}", body)
-        };
+        let block = self.block(selected_area);
+        let inner = block.inner(area);
+        block.render(area, buf);
 
-        Paragraph::new(content)
-            .style(WHITE)
-            .block(self.block(selected_area))
-            .render(area, buf);
+        let lines = body_textarea.lines();
+        if lines.is_empty() || (lines.len() == 1 && lines[0].is_empty()) {
+            Paragraph::new("Press Enter + vim keybinds to edit body...")
+                .style(WHITE)
+                .render(inner, buf);
+        } else {
+            body_textarea.render(inner, buf);
+        }
     }
 }
 
-// TODO: make the body address dynamic
-
 impl App {
-    pub fn handle_body_tab(&mut self, key: KeyCode) {
-        // Changed to &mut self
+    pub fn handle_body_tab(&mut self, key: crossterm::event::KeyCode) {
         match key {
-            KeyCode::Enter => {
-                if let Err(e) = self.open_editor_for_body() {
-                    eprintln!("Failed to open editor: {}", e);
-                }
+            crossterm::event::KeyCode::Enter => {
+                self.moving = false;
+            }
+            crossterm::event::KeyCode::Esc => {
+                self.moving = true;
             }
             _ => {}
         }
-    }
-
-    fn open_editor_for_body(&mut self) -> std::io::Result<()> {
-        fs::write(&self.body_file_path, &self.body)?;
-        let editor = env::var("EDITOR")
-            .or_else(|_| env::var("VISUAL"))
-            .unwrap_or_else(|_| "nano".to_string());
-        Command::new(&editor).arg(&self.body_file_path).status()?;
-        self.body = fs::read_to_string(&self.body_file_path)?;
-
-        Ok(())
     }
 }

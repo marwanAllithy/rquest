@@ -6,7 +6,7 @@ use ratatui::{
     },
     style::{Color, Stylize},
     text::Line,
-    widgets::{Block, BorderType, Paragraph, Tabs, Widget},
+    widgets::{Block, BorderType, Tabs, Widget},
 };
 
 const WHITE: Color = Color::White;
@@ -87,6 +87,7 @@ impl App {
                 self.header_key_value.clone(),
                 self.header_value_value.clone(),
                 full_area,
+                self.header_delete_popup,
             ),
             SelectedTab::Auth => self.selected_tab.render_auth(
                 area,
@@ -98,7 +99,7 @@ impl App {
 
             SelectedTab::Body => {
                 self.selected_tab
-                    .render_body(self.selected_area, &self.body, area, buf)
+                    .render_body(self.selected_area, &self.body_textarea, area, buf)
             }
             SelectedTab::Result => self.selected_tab.render_result(
                 self.selected_area,
@@ -117,14 +118,14 @@ impl App {
             BLACK
         };
 
-        Paragraph::new(self.url_value.clone().as_str())
-            .block(
-                Block::bordered()
-                    .title(" URL ")
-                    .fg(highlight_color)
-                    .border_type(BorderType::Plain),
-            )
-            .render(area, buf);
+        let block = Block::bordered()
+            .title(" URL ")
+            .fg(highlight_color)
+            .border_type(BorderType::Plain);
+
+        let inner = block.inner(area);
+        block.render(area, buf);
+        self.url_textarea.render(inner, buf);
     }
 }
 
@@ -132,12 +133,11 @@ fn render_title(area: Rect, buf: &mut Buffer) {
     "Rquest".bold().fg(WHITE).render(area, buf);
 }
 
-fn render_footer(area: Rect, buf: &mut Buffer, moving: bool, selected_area: SelectedArea) {
-    let moving_status = if moving { "ON" } else { "OFF" };
+fn render_footer(area: Rect, buf: &mut Buffer, _moving: bool, selected_area: SelectedArea) {
     let area_name = selected_area.to_string();
     let footer_text = format!(
-        "Moving: {} | Area: {} | ◄ ► to change tab | C-c to quit",
-        moving_status, area_name
+        "Area: {} | j/k to navigate | C-c to exit edit mode",
+        area_name
     );
     Line::raw(footer_text). fg(WHITE).centered().render(area, buf);
 }

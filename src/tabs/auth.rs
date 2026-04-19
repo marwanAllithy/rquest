@@ -37,7 +37,9 @@ impl SelectedTab {
         holder_value: String,
         value_value: String,
     ) {
-        let padding_block = Block::bordered().padding(ratatui::widgets::Padding::uniform(1)).fg(WHITE);
+        let padding_block = Block::bordered()
+            .padding(ratatui::widgets::Padding::uniform(1))
+            .fg(WHITE);
 
         let padded_area = padding_block.inner(area);
         padding_block.render(area, buf);
@@ -59,11 +61,21 @@ impl SelectedTab {
         };
 
         Paragraph::new(holder_value)
-            .block(Block::bordered().title(" Holder ").fg(holder_highlight).border_type(ratatui::widgets::BorderType::Plain))
+            .block(
+                Block::bordered()
+                    .title(" Holder ")
+                    .fg(holder_highlight)
+                    .border_type(ratatui::widgets::BorderType::Plain),
+            )
             .render(holder_area, buf);
 
         Paragraph::new(value_value)
-            .block(Block::bordered().title(" value ").fg(value_highlight).border_type(ratatui::widgets::BorderType::Plain))
+            .block(
+                Block::bordered()
+                    .title(" value ")
+                    .fg(value_highlight)
+                    .border_type(ratatui::widgets::BorderType::Plain),
+            )
             .render(value_area, buf);
     }
 }
@@ -71,6 +83,18 @@ impl SelectedTab {
 impl App {
     pub fn handle_auth_tab(&mut self, key: KeyCode) {
         match key {
+            KeyCode::Enter => {
+                if self.moving {
+                    self.moving = false
+                }
+            }
+
+            KeyCode::Esc => {
+                if !self.moving {
+                    self.moving = true
+                }
+            }
+
             KeyCode::Tab => {
                 self.selected_auth_feild = if self.selected_auth_feild == SelectedAuthFeild::Value {
                     SelectedAuthFeild::Holder
@@ -79,7 +103,7 @@ impl App {
                 }
             }
             KeyCode::Char(c) => {
-                if self.selected_auth_feild == SelectedAuthFeild::Value {
+                if self.selected_auth_feild == SelectedAuthFeild::Value && !self.moving {
                     self.auth_key_value.push(c);
                 } else {
                     self.auth_holder_value.push(c);

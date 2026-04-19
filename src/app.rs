@@ -14,6 +14,7 @@ use ratatui::{
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
     widgets::ListState,
 };
+use ratatui_textarea::TextArea;
 
 #[derive(Default)]
 pub struct App {
@@ -35,6 +36,7 @@ pub struct App {
 
     // Headers
     pub header_popup: bool,
+    pub header_delete_popup: bool,
     pub headers: HeadersList,
     pub header_key_value: String,
     pub header_value_value: String,
@@ -44,6 +46,8 @@ pub struct App {
     pub body: String,
     pub body_content: String,
     pub body_file_path: String,
+    pub url_textarea: TextArea<'static>,
+    pub body_textarea: TextArea<'static>,
 
     // auth
     pub auth: Auth,
@@ -120,13 +124,8 @@ impl App {
 
                 // URL input area
                 SelectedArea::Url => match key.code {
-                    KeyCode::Char('v') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                        if let Some(text) = self.get_clipboard_text() {
-                            self.url_value.push_str(&text);
-                        }
-                    }
-
                     KeyCode::Enter => {
+                        self.url_value = self.url_textarea.lines().join("");
                         if self.moving {
                             self.moving = false;
                         }
@@ -135,38 +134,25 @@ impl App {
                     KeyCode::Esc => {
                         if !self.moving {
                             self.moving = true;
-                            println!("movement made {:?}", self.moving)
                         }
                     }
 
-                    KeyCode::Char('j') => {
+                    KeyCode::Char('j') | KeyCode::Down => {
                         if self.moving {
                             self.next_area()
-                        } else {
-                            self.url_value.push('k')
                         }
                     }
 
-                    KeyCode::Char('k') => {
+                    KeyCode::Char('k') | KeyCode::Up => {
                         if self.moving {
                             self.previous_area()
-                        } else {
-                            self.url_value.push('k')
                         }
                     }
 
-                    KeyCode::Char(c) => {
-                        if !self.moving {
-                            self.url_value.push(c)
-                        }
+                    _ if !self.moving => {
+                        self.url_textarea.input(key);
                     }
 
-                    KeyCode::Backspace => {
-                        self.url_value.pop();
-                    }
-
-                    KeyCode::Down => self.next_area(),
-                    KeyCode::Up => self.previous_area(),
                     _ => {}
                 },
 
@@ -184,6 +170,19 @@ impl App {
                             return Ok(());
                         }
                         _ => {}
+                    }
+
+                    // Handle Body tab with textarea input
+                    if self.selected_tab == SelectedTab::Body {
+                        if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
+                            self.moving = true;
+                            self.selected_area = SelectedArea::Tabs;
+                            return Ok(());
+                        }
+                        if !self.moving {
+                            self.body_textarea.input(key);
+                            return Ok(());
+                        }
                     }
 
                     // Tab-specific handling

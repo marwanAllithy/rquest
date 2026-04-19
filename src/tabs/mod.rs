@@ -20,7 +20,7 @@ const WHITE: Color = Color::White;
 const BLACK: Color = Color::Black;
 const GRAY: Color = Color::Gray;
 
-#[derive(Default, Clone, Copy, Display, FromRepr, EnumIter)]
+#[derive(Default, Clone, Copy, Display, FromRepr, EnumIter, PartialEq)]
 pub enum SelectedTab {
     #[default]
     #[strum(to_string = "[1] Params")]

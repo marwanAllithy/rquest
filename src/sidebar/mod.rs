@@ -8,6 +8,7 @@ use crate::{
     tabs::{Auth, Header, Param, SelectedTab},
 };
 use crossterm::event::KeyCode;
+use ratatui_textarea::TextArea;
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Layout, Rect},
@@ -183,7 +184,6 @@ impl App {
         match key {
             KeyCode::Char('a') if !self.collection_popup => {
                 if let Some(collection) = &self.curr_collection {
-                    // new request
                     let new_request = RequestStructs {
                         url: "https://example.com/".to_string(),
                         params: Vec::new(),
@@ -194,9 +194,10 @@ impl App {
 
                     match add_request(collection.id.clone(), new_request.clone()) {
                         Ok(_) => {
-                            // Refresh the current collection
                             if let Ok(updated) = fetch_collection(collection.id.clone()) {
-                                self.curr_collection = Some(updated);
+                                self.curr_collection = Some(updated.clone());
+                                let idx = updated.requests.len() - 1;
+                                self.curr_collection_request_list_state.select(Some(idx));
                                 self.load_request(&new_request);
                             }
                         }
@@ -204,7 +205,6 @@ impl App {
                             eprintln!("Failed to add request: {}", e);
                         }
                     }
-                    //}
                 } else {
                     self.collection_popup = true;
                 }
@@ -297,9 +297,32 @@ impl App {
                     }
                 }
             }
-
+            KeyCode::Char('o') => {
+                if let Some(collection) = &self.curr_collection {
+                    if let Some(index) = self.curr_collection_request_list_state.selected() {
+                        if let Some(request) = collection.requests.get(index).cloned() {
+                            self.load_request(&request);
+                        }
+                    }
+                } else {
+                    if let Some(index) = self.collections_list_state.selected() {
+                        match fetch_collection_by_index(index) {
+                            Ok(collection) => {
+                                self.curr_collection = Some(collection.clone());
+                                if !collection.requests.is_empty() {
+                                    self.curr_collection_request_list_state.select(Some(0));
+                                }
+                            }
+                            Err(e) => {
+                                eprintln!("Failed to load collection: {}", e);
+                            }
+                        }
+                    } else {
+                        eprintln!("No collection selected");
+                    }
+                }
+            }
             KeyCode::Enter => {
-                // logic for when collecting popup is open
                 if self.collection_popup {
                     let id = Uuid::new_v4();
                     let title = self.new_collection_name_value.clone();
@@ -318,19 +341,19 @@ impl App {
                         }
                     }
                 } else if let Some(collection) = &self.curr_collection {
-                    // If inside a collection, load the selected request
                     if let Some(index) = self.curr_collection_request_list_state.selected() {
                         if let Some(request) = collection.requests.get(index).cloned() {
                             self.load_request(&request);
                         }
                     }
                 } else {
-                    // else, do the logic for selecting a collection
                     if let Some(index) = self.collections_list_state.selected() {
                         match fetch_collection_by_index(index) {
                             Ok(collection) => {
-                                //eprintln!("Loaded collection: {:?}", collection);
-                                self.curr_collection = Some(collection);
+                                self.curr_collection = Some(collection.clone());
+                                if !collection.requests.is_empty() {
+                                    self.curr_collection_request_list_state.select(Some(0));
+                                }
                             }
                             Err(e) => {
                                 eprintln!("Failed to load collection: {}", e);
@@ -353,10 +376,12 @@ impl App {
     }
 
     pub fn load_request(&mut self, request: &RequestStructs) {
-        self.url_value = request.url.clone();
+        self.url_textarea = TextArea::from(request.url.lines().map(|s| s.to_string()).collect::<Vec<String>>());
         self.params.items = request.params.clone();
         self.headers.items = request.headers.clone();
-        self.body = request.body.clone();
+        
+        let body_lines: Vec<String> = request.body.lines().map(|s| s.to_string()).collect();
+        self.body_textarea = TextArea::from(body_lines);
 
         self.auth = request.auth.clone();
         self.param_popup = false;

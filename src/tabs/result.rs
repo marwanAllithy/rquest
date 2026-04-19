@@ -39,7 +39,7 @@ impl App {
     pub fn make_request(&mut self) {
         let start = Instant::now();
 
-        let mut url = self.url_value.clone();
+        let mut url = self.url_textarea.lines().join("");
 
         let enabled_params: Vec<_> = self.params.items.iter().filter(|p| p.enabled).collect();
 
@@ -124,7 +124,7 @@ impl App {
                     && let Some(index) = self.curr_collection_request_list_state.selected()
                 {
                     let new_request = RequestStructs {
-                        url: self.url_value.clone(),
+                        url: self.url_textarea.lines().join(""),
                         params: self.params.items.clone(),
                         auth: self.auth.clone(),
                         headers: self.headers.items.clone(),

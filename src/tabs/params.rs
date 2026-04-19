@@ -226,6 +226,14 @@ impl App {
                 self.previous_param_row()
             }
 
+            KeyCode::Char(' ') if !self.param_popup && !self.param_delete_popup && !self.moving => {
+                if let Some(index) = self.params.state.selected()
+                    && let Some(item) = self.params.items.get_mut(index)
+                {
+                    item.enabled = !item.enabled;
+                }
+            }
+
             KeyCode::Char('d') if !self.param_popup && !self.param_delete_popup && !self.moving => {
                 if self.params.state.selected().is_some() {
                     self.param_delete_popup = true;
