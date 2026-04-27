@@ -1,5 +1,5 @@
 Rquest:
-A TUI HTTP request builder made in rust, perfect for backend texting inside of the terminal 
+A TUI HTTP request builder made in rust, perfect for backend testing inside of the terminal 
 
 # Installation
 ```bash 
