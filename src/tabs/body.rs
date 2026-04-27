@@ -7,7 +7,6 @@ use ratatui::{
     widgets::{Paragraph, Widget},
 };
 use ratatui_textarea::{CursorMove, TextArea};
-
 const WHITE: Color = Color::White;
 
 impl SelectedTab {
