@@ -12,7 +12,7 @@ cargo install --git https://github.com/marwanAllithy/rquest
 - [ ] better movement keybinds
 - [ ] revamp movements
 - [ ] better help and docs
-- [ ] remove moving from the result page
+- [ ] remove blocking from the result page and make it work concurrently
 
 
 # Contributing
